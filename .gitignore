@@ -1,0 +1,17 @@
+# Generated assets (re-create with generate-icons.ps1)
+assets/icon-16.png
+assets/icon-48.png
+assets/icon-128.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.suo
+*.user
+
+# Extension package
+*.zip
+*.crx

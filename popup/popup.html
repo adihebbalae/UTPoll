@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UT Instapoll Alert</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <header>
+    <img src="../assets/icon-48.png" alt="" class="logo">
+    <h1>UT Instapoll Alert</h1>
+  </header>
+
+  <section class="status-row">
+    <span id="statusDot" class="dot gray"></span>
+    <span id="statusText">Checking…</span>
+  </section>
+
+  <hr>
+
+  <form id="settingsForm" autocomplete="off">
+
+    <label class="field">
+      <span class="field-label">Course ID <em>(optional — filters to one course)</em></span>
+      <input type="text" id="courseId" placeholder="e.g. 12345">
+    </label>
+
+    <label class="field">
+      <span class="field-label">API URL pattern</span>
+      <input type="text" id="apiPattern" placeholder="/api/v1/student/course/*/poll">
+    </label>
+
+    <div class="toggle-group">
+      <label class="toggle">
+        <span>Desktop notification</span>
+        <input type="checkbox" id="enableNotification">
+        <span class="slider"></span>
+      </label>
+      <label class="toggle">
+        <span>Audio alert</span>
+        <input type="checkbox" id="enableAudio">
+        <span class="slider"></span>
+      </label>
+      <label class="toggle">
+        <span>Push via ntfy.sh</span>
+        <input type="checkbox" id="enablePush">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="experimental-section">
+      <p class="experimental-label">⚠️ Experimental</p>
+      <label class="toggle">
+        <span>Auto-submit attendance polls</span>
+        <input type="checkbox" id="enableAutoSubmit">
+        <span class="slider"></span>
+      </label>
+      <p class="hint">Automatically submits trivial attendance / participation polls the moment they go live. Only acts on polls with type&nbsp;<em>attendance</em>. Does not answer question-based polls.</p>
+    </div>
+
+    <div id="ntfySection" class="ntfy-section hidden">
+      <label class="field">
+        <span class="field-label">ntfy.sh topic name</span>
+        <input type="text" id="ntfyTopic" placeholder="my-unique-private-topic">
+      </label>
+      <p class="hint">
+        Install the <strong>ntfy</strong> app on your phone, subscribe to this topic,
+        and you'll receive an instant push alert when a poll goes live.
+      </p>
+      <button type="button" id="testPushBtn" class="btn-secondary btn-full">📲 Send Test Push</button>
+      <p id="testPushStatus" class="push-status"></p>
+    </div>
+
+    <div class="action-row">
+      <button type="button" id="armAudioBtn" class="btn-secondary">🔔 Arm Audio</button>
+      <button type="submit" class="btn-primary">Save</button>
+    </div>
+
+  </form>
+
+  <script src="popup.js"></script>
+</body>
+</html>
