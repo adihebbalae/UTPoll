@@ -12,6 +12,7 @@ services:
   - type: worker            # background worker — no HTTP port, never spins down
     name: instapoll-notifier
     runtime: python
+    plan: free              # use Render's free tier ($0/month)
     rootDir: cloud          # all commands run from the cloud/ subdirectory
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
