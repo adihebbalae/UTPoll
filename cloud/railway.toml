@@ -1,0 +1,18 @@
+# Railway config — Instapoll Cloud Poll Notifier
+# https://docs.railway.com/reference/config-as-code
+#
+# Deploy steps:
+#   1. Push this repo to GitHub.
+#   2. railway.com → New Project → Deploy from GitHub repo → select this repo.
+#   3. In service settings → Source → set Root Directory to: cloud
+#   4. Add env vars COURSE_ID and NTFY_TOPIC in the service Variables tab.
+#   5. Each new semester: update COURSE_ID in the Variables tab — service
+#      redeploys automatically.
+
+[build]
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python main.py"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

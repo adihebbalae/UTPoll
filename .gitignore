@@ -21,3 +21,6 @@ chrome-extension/plan.md
 # Cloud worker — local env vars (never commit real values)
 .env
 cloud/.env
+
+# Railway local overrides (if using railway CLI)
+.railway/

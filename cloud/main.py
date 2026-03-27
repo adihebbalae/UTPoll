@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import threading
+from urllib.parse import quote
 import requests
 import pysher
 
@@ -34,7 +35,7 @@ CHANNEL_NAME = f"polls_course_{COURSE_ID}"
 # ── ntfy helpers ──────────────────────────────────────────────────────────────
 
 def send_ntfy(title: str, body: str, priority: str = "default", tags: list[str] | None = None) -> None:
-    url = f"{NTFY_BASE_URL}/{NTFY_TOPIC}"
+    url = f"{NTFY_BASE_URL}/{quote(NTFY_TOPIC, safe='')}"
     headers = {
         "Title":    title,
         "Priority": priority,
@@ -107,7 +108,7 @@ def heartbeat_loop() -> None:
 
 print(f"[startup] Instapoll Cloud Notifier starting")
 print(f"[startup] Course channel : {CHANNEL_NAME}")
-print(f"[startup] ntfy topic     : {NTFY_TOPIC}")
+print(f"[startup] ntfy topic     : {NTFY_TOPIC[:4]}...{NTFY_TOPIC[-4:]}" if len(NTFY_TOPIC) > 8 else "[startup] ntfy topic     : (set)")
 
 pusher = pysher.Pusher(
     key=PUSHER_APP_KEY,
