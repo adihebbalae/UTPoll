@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Screenshot Capture — UT Instapoll Alert</title>
+<style>
+/* ── Page base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111; }
+
+/* ── Sandbox iframe ──────────────────────────────────────────────── */
+#sandbox-frame {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: calc(100% - 54px);
+  border: none;
+  z-index: 1;
+  transition: height 0.2s;
+}
+body.capture-mode #sandbox-frame { height: 100%; }
+
+/* ── Popup overlay ───────────────────────────────────────────────── */
+#popup-overlay {
+  position: fixed;
+  top: 0; right: 0;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+#popup-overlay.visible { opacity: 1; pointer-events: auto; }
+
+.pm {
+  width: 320px;
+  background: #1c1c1c;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  border: 1px solid #2a2a2a;
+  border-top: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: #e0e0e0;
+}
+.pm-head { background: #BF5700; padding: 10px 14px; display: flex; align-items: center; gap: 9px; }
+.pm-head-icon { width: 22px; height: 22px; border-radius: 4px; background: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pm-head-icon svg { width: 16px; height: 16px; }
+.pm-head h2 { font-size: 13px; font-weight: 600; color: white; letter-spacing: 0.01em; }
+.pm-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #242424; font-size: 12px; color: #aaa; }
+.pm-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; transition: background 0.3s; }
+.pm-dot.gray  { background: #555; }
+.pm-dot.green { background: #4caf50; box-shadow: 0 0 6px #4caf5088; }
+.pm-dot.red   { background: #f44336; box-shadow: 0 0 8px #f4433688; animation: pm-pulse 1s ease-in-out infinite; }
+.pm-dot.teal  { background: #00bcd4; box-shadow: 0 0 6px #00bcd488; }
+@keyframes pm-pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+.pm-hr { border: none; border-top: 1px solid #2e2e2e; }
+.pm-form { padding: 11px 14px 0; }
+.pm-field { margin-bottom: 9px; }
+.pm-field label { display: block; font-size: 11px; color: #777; margin-bottom: 3px; }
+.pm-field label em { font-style: normal; color: #555; }
+.pm-field input { width: 100%; background: #272727; border: 1px solid #3a3a3a; border-radius: 6px; color: #ccc; padding: 5px 9px; font-size: 12px; outline: none; }
+.pm-toggles { display: flex; flex-direction: column; gap: 8px; margin-bottom: 11px; }
+.pm-toggle { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.pm-slider { width: 34px; height: 19px; border-radius: 10px; position: relative; flex-shrink: 0; }
+.pm-slider.on  { background: #BF5700; }
+.pm-slider.off { background: #3a3a3a; }
+.pm-slider::after { content:''; position: absolute; width: 13px; height: 13px; background: white; border-radius: 50%; top: 3px; transition: left 0.2s; }
+.pm-slider.on::after  { left: 18px; }
+.pm-slider.off::after { left: 3px; }
+.pm-exp { border: 1px solid #3a2a00; background: #1e1600; border-radius: 7px; padding: 9px 11px; margin-bottom: 11px; }
+.pm-exp-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #c8860a; letter-spacing: 0.06em; margin-bottom: 7px; }
+.pm-ntfy { margin-bottom: 9px; }
+.pm-ntfy label { display: block; font-size: 11px; color: #777; margin-bottom: 3px; }
+.pm-ntfy input { width: 100%; background: #272727; border: 1px solid #3a3a3a; border-radius: 6px; color: #ccc; padding: 5px 9px; font-size: 12px; }
+.pm-ntfy-hint { font-size: 11px; color: #555; line-height: 1.4; margin-top: 4px; }
+.pm-ntfy-btn { display: block; width: 100%; margin-top: 7px; padding: 6px; background: #2b2b2b; color: #999; border: 1px solid #3a3a3a; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer; }
+.pm-actions { display: flex; gap: 8px; padding: 0 14px 13px; margin-top: 10px; }
+.pm-btn { flex: 1; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+.pm-btn.primary   { background: #BF5700; color: white; }
+.pm-btn.secondary { background: #2b2b2b; color: #bbb; border: 1px solid #3a3a3a; }
+.hidden { display: none !important; }
+
+/* ── Notification toast ──────────────────────────────────────────── */
+#notif-overlay {
+  position: fixed;
+  top: 16px; right: 16px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#notif-overlay.visible { opacity: 1; }
+
+.notif {
+  width: 360px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.22);
+  padding: 13px 15px 13px 13px;
+  display: flex;
+  gap: 11px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+.notif-icon { width: 42px; height: 42px; background: #BF5700; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.notif-icon svg { width: 28px; height: 28px; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+.notif-app { font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+.notif-time { font-size: 11px; color: #bbb; }
+.notif-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 3px; }
+.notif-msg { font-size: 12px; color: #555; line-height: 1.4; }
+.notif-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #BF5700; border-radius: 0 0 14px 14px; }
+
+/* ── Scene label ─────────────────────────────────────────────────── */
+#scene-label {
+  position: fixed;
+  top: 16px; left: 16px;
+  background: rgba(0,0,0,0.72);
+  color: #ccc;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  z-index: 300;
+  letter-spacing: 0.03em;
+  transition: opacity 0.2s;
+}
+body.capture-mode #scene-label { opacity: 0; pointer-events: none; }
+
+/* ── Controls bar ────────────────────────────────────────────────── */
+#controls {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 54px;
+  background: #161616;
+  border-top: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  z-index: 999;
+  font-family: "Segoe UI", sans-serif;
+  transition: transform 0.2s;
+}
+body.capture-mode #controls { transform: translateY(100%); }
+
+.ctrl-label { font-size: 11px; color: #555; margin-right: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+.ctrl-scene-btn {
+  padding: 5px 13px;
+  border-radius: 18px;
+  border: 1px solid #333;
+  background: #222;
+  color: #bbb;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.ctrl-scene-btn:hover        { background: #2e2e2e; color: #fff; }
+.ctrl-scene-btn.active       { background: #BF5700; border-color: #BF5700; color: #fff; }
+
+.ctrl-sep { width: 1px; height: 28px; background: #2e2e2e; margin: 0 4px; }
+
+.ctrl-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+#viewport-display { font-size: 11px; color: #666; font-family: monospace; transition: color 0.25s; }
+#viewport-display.ok  { color: #4caf50; font-weight: 600; }
+#viewport-display.bad { color: #f44336; }
+#capture-jpeg {
+  padding: 5px 14px;
+  border-radius: 18px;
+  border: 1px solid #4caf50;
+  background: transparent;
+  color: #4caf50;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#capture-jpeg:hover    { background: #4caf50; color: #111; }
+#capture-jpeg:disabled { opacity: 0.35; cursor: default; }
+#toggle-capture {
+  padding: 5px 14px;
+  border-radius: 18px;
+  border: 1px solid #BF5700;
+  background: transparent;
+  color: #BF5700;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#toggle-capture:hover { background: #BF5700; color: white; }
+.ctrl-hint { font-size: 10px; color: #555; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+
+<!-- Sandbox iframe -->
+<iframe id="sandbox-frame" src="http://localhost:8080/index.html"></iframe>
+
+<!-- Popup overlay -->
+<div id="popup-overlay">
+  <div class="pm">
+    <div class="pm-head">
+      <div class="pm-head-icon">
+        <!-- Tower SVG (filled, burnt orange stroke on white) -->
+        <svg viewBox="0 0 100 100" fill="none" stroke="#BF5700" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="10" y="55" width="80" height="40" rx="5"/>
+          <line x1="10" y1="70" x2="90" y2="70"/>
+          <circle cx="30" cy="62.5" r="3.5" fill="#BF5700" stroke="none"/>
+          <circle cx="50" cy="62.5" r="3.5" fill="#BF5700" stroke="none"/>
+          <circle cx="70" cy="62.5" r="3.5" fill="#BF5700" stroke="none"/>
+          <line x1="26" y1="70" x2="26" y2="95"/>
+          <line x1="42" y1="70" x2="42" y2="95"/>
+          <line x1="58" y1="70" x2="58" y2="95"/>
+          <line x1="74" y1="70" x2="74" y2="95"/>
+          <path d="M 22,55 V 43 Q 22,40 25,40 H 32 V 55 Z"/>
+          <path d="M 78,55 V 43 Q 78,40 75,40 H 68 V 55 Z"/>
+          <line x1="32" y1="55" x2="32" y2="15"/>
+          <line x1="68" y1="55" x2="68" y2="15"/>
+          <circle cx="50" cy="44" r="8"/>
+          <line x1="41" y1="15" x2="41" y2="36"/>
+          <line x1="50" y1="15" x2="50" y2="36"/>
+          <line x1="59" y1="15" x2="59" y2="36"/>
+          <path d="M 28,15 V 13.5 Q 28,12 30,12 H 70 Q 72,12 72,13.5 V 15 H 28 Z"/>
+          <path d="M 35,10 V 7 Q 35,5 37,5 H 63 Q 65,5 65,7 V 10 H 35 Z"/>
+        </svg>
+      </div>
+      <h2>UT Instapoll Alert</h2>
+    </div>
+
+    <div class="pm-status">
+      <div class="pm-dot" id="pm-dot"></div>
+      <span id="pm-status-text">Checking…</span>
+    </div>
+
+    <hr class="pm-hr">
+
+    <div class="pm-form">
+      <div class="pm-field">
+        <label>Course ID <em>(optional — filters to one course)</em></label>
+        <input type="text" value="12345" readonly>
+      </div>
+      <div class="pm-field">
+        <label>API URL pattern</label>
+        <input type="text" value="/api/v1/student/course/*/poll" readonly>
+      </div>
+
+      <div class="pm-toggles">
+        <div class="pm-toggle">
+          <span>Desktop notification</span>
+          <div class="pm-slider on" id="toggle-notif"></div>
+        </div>
+        <div class="pm-toggle">
+          <span>Audio alert</span>
+          <div class="pm-slider on" id="toggle-audio"></div>
+        </div>
+        <div class="pm-toggle">
+          <span>Push via ntfy.sh</span>
+          <div class="pm-slider" id="toggle-push"></div>
+        </div>
+      </div>
+
+      <div class="pm-exp">
+        <div class="pm-exp-lbl">⚠️ Experimental</div>
+        <div class="pm-toggle">
+          <span>Auto-submit attendance polls</span>
+          <div class="pm-slider off" id="toggle-autosubmit"></div>
+        </div>
+      </div>
+
+      <div class="pm-ntfy hidden" id="pm-ntfy-section">
+        <div class="pm-ntfy">
+          <label>ntfy.sh topic name</label>
+          <input type="text" value="ut-instapoll-alerts" readonly>
+          <div class="pm-ntfy-hint">Install the <strong>ntfy</strong> app on your phone, subscribe to this topic, and you'll get instant push alerts.</div>
+        </div>
+        <div class="pm-ntfy-btn">📲 Send Test Push</div>
+      </div>
+    </div>
+
+    <div class="pm-actions">
+      <button class="pm-btn secondary">🔔 Arm Audio</button>
+      <button class="pm-btn primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Desktop notification toast -->
+<div id="notif-overlay">
+  <div class="notif" style="position:relative;">
+    <div class="notif-icon">
+      <svg viewBox="0 0 100 100" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="55" width="80" height="40" rx="5"/>
+        <line x1="10" y1="70" x2="90" y2="70"/>
+        <circle cx="30" cy="62.5" r="3" fill="white" stroke="none"/>
+        <circle cx="50" cy="62.5" r="3" fill="white" stroke="none"/>
+        <circle cx="70" cy="62.5" r="3" fill="white" stroke="none"/>
+        <line x1="26" y1="70" x2="26" y2="95"/>
+        <line x1="42" y1="70" x2="42" y2="95"/>
+        <line x1="58" y1="70" x2="58" y2="95"/>
+        <line x1="74" y1="70" x2="74" y2="95"/>
+        <path d="M 22,55 V 43 Q 22,40 25,40 H 32 V 55 Z"/>
+        <path d="M 78,55 V 43 Q 78,40 75,40 H 68 V 55 Z"/>
+        <line x1="32" y1="55" x2="32" y2="15"/>
+        <line x1="68" y1="55" x2="68" y2="15"/>
+        <circle cx="50" cy="44" r="8"/>
+        <line x1="41" y1="15" x2="41" y2="36"/>
+        <line x1="50" y1="15" x2="50" y2="36"/>
+        <line x1="59" y1="15" x2="59" y2="36"/>
+        <path d="M 28,15 V 13.5 Q 28,12 30,12 H 70 Q 72,12 72,13.5 V 15 H 28 Z"/>
+        <path d="M 35,10 V 7 Q 35,5 37,5 H 63 Q 65,5 65,7 V 10 H 35 Z"/>
+      </svg>
+    </div>
+    <div class="notif-body">
+      <div class="notif-row">
+        <span class="notif-app">UT Instapoll Alert</span>
+        <span class="notif-time">now</span>
+      </div>
+      <div class="notif-title">🚨 Live Attendance Poll!</div>
+      <div class="notif-msg">CS 301 has a live poll. Open Instapoll and submit now.</div>
+    </div>
+    <div class="notif-bar"></div>
+  </div>
+</div>
+
+<!-- Scene label -->
+<div id="scene-label">SS1 — Monitoring Active</div>
+
+<!-- Controls bar -->
+<div id="controls">
+  <span class="ctrl-label">Scene</span>
+  <button class="ctrl-scene-btn active" onclick="setScene(1)">1 — Monitoring</button>
+  <button class="ctrl-scene-btn" onclick="setScene(2)">2 — Alert Fires</button>
+  <button class="ctrl-scene-btn" onclick="setScene(3)">3 — Poll Detected</button>
+  <button class="ctrl-scene-btn" onclick="setScene(4)">4 — Auto-Submit</button>
+  <button class="ctrl-scene-btn" onclick="setScene(5)">5 — Push Setup</button>
+
+  <div class="ctrl-sep"></div>
+  <span class="ctrl-hint">Keyboard: 1–5 / C = capture mode / H = reset</span>
+
+  <div class="ctrl-right">
+    <span id="viewport-display">0×0</span>
+    <button id="capture-jpeg" onclick="captureJpeg()" title="Download current scene as JPEG (resize window to 1280×800 or 640×400 first)">📸 JPEG</button>
+    <button id="toggle-capture" onclick="toggleCaptureMode()">Hide Controls</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── Scene definitions ───────────────────────────────────────────── */
+const SCENES = {
+  1: {
+    label:         'SS1 — Monitoring Active',
+    pollLive:      false,
+    submitted:     false,
+    showPopup:     true,
+    showToast:     false,
+    dotClass:      'green',
+    statusText:    'Monitoring polls.la.utexas.edu',
+    pushOn:        true,
+    ntfyVisible:   true,
+    autosubmitOn:  false,
+  },
+  2: {
+    label:         'SS2 — Alert Fires (notification + audio)',
+    pollLive:      true,
+    submitted:     false,
+    showPopup:     false,
+    showToast:     true,
+    dotClass:      'gray',
+    statusText:    '',
+    pushOn:        false,
+    ntfyVisible:   false,
+    autosubmitOn:  false,
+  },
+  3: {
+    label:         'SS3 — Poll Detected',
+    pollLive:      true,
+    submitted:     false,
+    showPopup:     true,
+    showToast:     false,
+    dotClass:      'red',
+    statusText:    'Poll detected \u2014 submit now!',
+    pushOn:        false,
+    ntfyVisible:   false,
+    autosubmitOn:  false,
+  },
+  4: {
+    label:         'SS4 — Auto-Submit Success',
+    pollLive:      true,
+    submitted:     true,
+    showPopup:     true,
+    showToast:     false,
+    dotClass:      'teal',
+    statusText:    'Attendance submitted \u2705',
+    pushOn:        false,
+    ntfyVisible:   false,
+    autosubmitOn:  true,
+  },
+  5: {
+    label:         'SS5 — Push Notification Setup',
+    pollLive:      false,
+    submitted:     false,
+    showPopup:     true,
+    showToast:     false,
+    dotClass:      'green',
+    statusText:    'Monitoring polls.la.utexas.edu',
+    pushOn:        true,
+    ntfyVisible:   true,
+    autosubmitOn:  true,
+  },
+};
+
+let currentScene = 1;
+let captureMode  = false;
+let frameReady   = false;
+
+/* ── Frame helpers ───────────────────────────────────────────────── */
+function getFrame() {
+  return document.getElementById('sandbox-frame');
+}
+
+function frameDoc() {
+  try { return getFrame().contentDocument; } catch { return null; }
+}
+
+function frameWin() {
+  try { return getFrame().contentWindow; } catch { return null; }
+}
+
+function waitForFrame(cb) {
+  const f = getFrame();
+  if (frameReady) { cb(); return; }
+  f.addEventListener('load', () => { frameReady = true; cb(); }, { once: true });
+}
+
+/* ── Capture mode CSS injection ──────────────────────────────────── */
+function injectCaptureCSS(on) {
+  const doc = frameDoc();
+  if (!doc) return;
+  const existing = doc.getElementById('ss-capture-style');
+  if (on && !existing) {
+    const s = doc.createElement('style');
+    s.id = 'ss-capture-style';
+    // hides the sandbox control panel, expands main content to full width
+    s.textContent = `
+      .page-wrap > div:last-child { display: none !important; }
+      .page-wrap { grid-template-columns: 1fr !important; max-width: 860px !important; }
+    `;
+    doc.head.appendChild(s);
+  } else if (!on && existing) {
+    existing.remove();
+  }
+}
+
+/* ── Scene controller ────────────────────────────────────────────── */
+function setScene(n) {
+  currentScene = n;
+  const s = SCENES[n];
+
+  // Update scene label
+  document.getElementById('scene-label').textContent = s.label;
+
+  // Highlight active button
+  document.querySelectorAll('.ctrl-scene-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i + 1 === n);
+  });
+
+  // Update popup state
+  document.getElementById('pm-dot').className        = `pm-dot ${s.dotClass}`;
+  document.getElementById('pm-status-text').textContent = s.statusText;
+  document.getElementById('toggle-push').className   = `pm-slider ${s.pushOn ? 'on' : 'off'}`;
+  document.getElementById('toggle-autosubmit').className = `pm-slider ${s.autosubmitOn ? 'on' : 'off'}`;
+  document.getElementById('pm-ntfy-section').classList.toggle('hidden', !s.ntfyVisible);
+  document.getElementById('popup-overlay').classList.toggle('visible', s.showPopup);
+  document.getElementById('notif-overlay').classList.toggle('visible', s.showToast);
+
+  // Drive the iframe (once loaded)
+  waitForFrame(() => {
+    const fw = frameWin();
+    if (!fw) return;
+
+    if (s.pollLive) {
+      // Make sure double-fire checkbox is checked for debounce
+      const chk = frameDoc()?.getElementById('doubleFireChk');
+      if (chk) chk.checked = true;
+      fw.firePoll();
+    } else {
+      fw.clearPoll();
+    }
+
+    // For scene 4 (auto-submitted): simulate the form being submitted
+    if (s.submitted) {
+      setTimeout(() => { fw.handleSubmit?.(); }, 350);
+    }
+
+    // Apply/remove capture CSS based on current mode
+    injectCaptureCSS(captureMode);
+  });
+}
+
+/* ── Capture mode ────────────────────────────────────────────────── */
+function toggleCaptureMode() {
+  captureMode = !captureMode;
+  document.body.classList.toggle('capture-mode', captureMode);
+  document.getElementById('toggle-capture').textContent =
+    captureMode ? 'Show Controls' : 'Hide Controls';
+  injectCaptureCSS(captureMode);
+}
+
+/* ── Viewport display ────────────────────────────────────────────── */
+function updateViewport() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const el = document.getElementById('viewport-display');
+  const ok = (w === 1280 && h === 800) || (w === 640 && h === 400);
+  el.textContent = `${w} × ${h}`;
+  el.classList.toggle('ok',  ok);
+  el.classList.toggle('bad', !ok);
+  document.getElementById('capture-jpeg').disabled = !ok;
+}
+window.addEventListener('resize', updateViewport);
+updateViewport();
+
+/* ── JPEG capture ────────────────────────────────────────────────── */
+async function captureJpeg() {
+  const btn = document.getElementById('capture-jpeg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Capturing…';
+
+  const wasCaptureMode = captureMode;
+  if (!captureMode) toggleCaptureMode();
+  await new Promise(r => setTimeout(r, 280)); // wait for controls to slide out
+
+  try {
+    const canvas = await html2canvas(document.body, {
+      useCORS:         true,
+      allowTaint:      true,
+      backgroundColor: '#111111',
+      scale:           1,
+      logging:         false,
+      width:           window.innerWidth,
+      height:          window.innerHeight,
+    });
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = `utpoll-ss${currentScene}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 'image/jpeg', 0.95);
+  } catch (err) {
+    alert('Capture failed: ' + err.message);
+  } finally {
+    if (!wasCaptureMode) toggleCaptureMode();
+    btn.textContent = '📸 JPEG';
+    updateViewport(); // re-enables button if size is still correct
+  }
+}
+
+/* ── Keyboard shortcuts ──────────────────────────────────────────── */
+document.addEventListener('keydown', (e) => {
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 5) { setScene(n); return; }
+  if (e.key === 'c' || e.key === 'C') { toggleCaptureMode(); return; }
+  if (e.key === 'h' || e.key === 'H') { frameWin()?.clearPoll?.(); return; }
+});
+
+/* ── Init: load scene 1 once frame is ready ──────────────────────── */
+document.getElementById('sandbox-frame').addEventListener('load', () => {
+  frameReady = true;
+  setScene(1);
+});
+</script>
+</body>
+</html>

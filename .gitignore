@@ -1,7 +1,7 @@
-# Generated assets (re-create with generate-icons.ps1)
-assets/icon-16.png
-assets/icon-48.png
-assets/icon-128.png
+# Generated assets (re-create with chrome-extension/generate-icons.ps1)
+chrome-extension/assets/icon-16.png
+chrome-extension/assets/icon-48.png
+chrome-extension/assets/icon-128.png
 
 # OS
 .DS_Store
@@ -11,7 +11,13 @@ Thumbs.db
 .vscode/
 *.suo
 *.user
+.github/
+chrome-extension/plan.md
 
 # Extension package
 *.zip
 *.crx
+
+# Cloud worker — local env vars (never commit real values)
+.env
+cloud/.env

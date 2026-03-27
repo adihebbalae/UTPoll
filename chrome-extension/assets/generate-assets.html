@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UT Instapoll Alert — Asset Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: #1a1a1a; color: #e0e0e0; padding: 24px; }
+  h1 { font-size: 28px; margin-bottom: 8px; color: #fff; }
+  h1 span { color: #BF5700; }
+  p.sub { color: #999; margin-bottom: 32px; }
+  section { background: #242424; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  h2 { font-size: 18px; margin-bottom: 16px; color: #ccc; }
+  .row { display: flex; gap: 32px; align-items: end; flex-wrap: wrap; }
+  .item { text-align: center; }
+  .item label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+  canvas {
+    background-image:
+      linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    border: 1px solid #333;
+    border-radius: 4px;
+  }
+  canvas.opaque { background-image: none; background-color: #333; }
+  .promo-canvas { max-width: 100%; height: auto; }
+  button {
+    display: inline-block; margin-top: 10px; padding: 6px 16px;
+    background: #BF5700; color: #fff; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+  }
+  button:hover { background: #d46000; }
+  .note { font-size: 12px; color: #666; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<h1>UT <span>Instapoll</span> Alert — Asset Generator</h1>
+<p class="sub">Open in Chrome. Click &ldquo;Download&rdquo; to save each PNG. Checkerboard = transparent.</p>
+
+<!-- Extension Icons -->
+<section>
+  <h2>Extension Icons (transparent background)</h2>
+  <div class="row" id="icon-row"></div>
+</section>
+
+<!-- Store Icon -->
+<section>
+  <h2>Store Icon &mdash; 128&times;128 (pick one)</h2>
+  <div class="row">
+    <div class="item">
+      <label>Option A: Burnt Orange bg + White tower</label>
+      <canvas id="store-a" class="opaque" width="128" height="128"></canvas>
+      <br><button onclick="dl('store-a','store-icon-128-orange.png')">Download A</button>
+    </div>
+    <div class="item">
+      <label>Option B: Charcoal bg + Burnt Orange tower</label>
+      <canvas id="store-b" class="opaque" width="128" height="128"></canvas>
+      <br><button onclick="dl('store-b','store-icon-128-charcoal.png')">Download B</button>
+    </div>
+  </div>
+</section>
+
+<!-- Small Promo Tile -->
+<section>
+  <h2>Small Promo Tile &mdash; 440&times;280</h2>
+  <div class="item">
+    <canvas id="small-promo" class="opaque promo-canvas" width="440" height="280"></canvas>
+    <br><button onclick="dl('small-promo','small-promo-440x280.png')">Download PNG</button>
+  </div>
+</section>
+
+<!-- Marquee Promo Tile -->
+<section>
+  <h2>Marquee Promo Tile &mdash; 1400&times;560</h2>
+  <div class="item">
+    <canvas id="marquee" class="opaque promo-canvas" width="1400" height="560"></canvas>
+    <br><button onclick="dl('marquee','marquee-1400x560.png')">Download PNG</button>
+  </div>
+</section>
+
+<script>
+/* ── colour constants ──────────────────────────────────────────── */
+const BURNT_ORANGE = '#BF5700';   // Primary
+const WHITE        = '#FFFFFF';   // Primary
+const CHARCOAL     = '#333F48';   // Secondary – dark
+const AMBER        = '#F8971F';   // Secondary – warm
+const LIMESTONE    = '#D6D2C4';   // Secondary – light
+const BLUE_GRAY    = '#9CADB7';   // Secondary – cool
+
+/* ── SVG builders ──────────────────────────────────────────────── */
+
+/** Detailed outlined tower (good ≥ 48 px) */
+function detailedSvg(strokeColor, dotColor, w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${w}" height="${h}">
+  <g fill="none" stroke="${strokeColor}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="55" width="80" height="40" rx="5"/>
+    <line x1="10" y1="70" x2="90" y2="70"/>
+    <circle cx="30" cy="62.5" r="3" fill="${dotColor}" stroke="none"/>
+    <circle cx="50" cy="62.5" r="3" fill="${dotColor}" stroke="none"/>
+    <circle cx="70" cy="62.5" r="3" fill="${dotColor}" stroke="none"/>
+    <line x1="26" y1="70" x2="26" y2="95"/>
+    <line x1="42" y1="70" x2="42" y2="95"/>
+    <line x1="58" y1="70" x2="58" y2="95"/>
+    <line x1="74" y1="70" x2="74" y2="95"/>
+    <path d="M 22,55 V 43 Q 22,40 25,40 H 32 V 55 Z"/>
+    <path d="M 78,55 V 43 Q 78,40 75,40 H 68 V 55 Z"/>
+    <line x1="32" y1="55" x2="32" y2="15"/>
+    <line x1="68" y1="55" x2="68" y2="15"/>
+    <circle cx="50" cy="44" r="8"/>
+    <line x1="41" y1="15" x2="41" y2="36"/>
+    <line x1="50" y1="15" x2="50" y2="36"/>
+    <line x1="59" y1="15" x2="59" y2="36"/>
+    <path d="M 28,15 V 13.5 Q 28,12 30,12 H 70 Q 72,12 72,13.5 V 15 H 28 Z"/>
+    <path d="M 35,10 V 7 Q 35,5 37,5 H 63 Q 65,5 65,7 V 10 H 35 Z"/>
+  </g></svg>`;
+}
+
+/** Filled silhouette (for 16 px) */
+function filledSvg(fillColor, w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${w}" height="${h}">
+    <path d="M 10,95 H 90 V 55 H 78 V 40 H 68 V 15 H 72 V 10 H 65 V 5
+             H 35 V 10 H 28 V 15 H 32 V 40 H 22 V 55 H 10 Z"
+          fill="${fillColor}"/>
+  </svg>`;
+}
+
+/* ── render helpers ────────────────────────────────────────────── */
+
+function svgToImage(svgStr) {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const img  = new Image();
+    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG load failed')); };
+    img.src = url;
+  });
+}
+
+function dl(canvasId, filename) {
+  const c = document.getElementById(canvasId);
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+
+/* ── generate everything on load ───────────────────────────────── */
+
+(async function init() {
+
+  /* ---- Extension Icons (16, 48, 128) ---- */
+  const iconRow = document.getElementById('icon-row');
+  for (const size of [16, 48, 128]) {
+    const svg = size <= 24
+      ? filledSvg(BURNT_ORANGE, size, size)
+      : detailedSvg(BURNT_ORANGE, BURNT_ORANGE, size, size);
+    const img = await svgToImage(svg);
+
+    const canvas  = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    canvas.id     = `icon-${size}`;
+    canvas.style.width  = `${Math.max(size, 64)}px`;
+    canvas.style.height = `${Math.max(size, 64)}px`;
+    canvas.style.imageRendering = size <= 24 ? 'pixelated' : 'auto';
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+
+    const wrap  = document.createElement('div');
+    wrap.className = 'item';
+    const label = document.createElement('label');
+    label.textContent = `${size} × ${size}`;
+    const btn   = document.createElement('button');
+    btn.textContent = 'Download';
+    btn.onclick = () => dl(`icon-${size}`, `icon-${size}.png`);
+
+    wrap.append(label, canvas, btn);
+    iconRow.append(wrap);
+  }
+
+  /* ---- Store Icon A: Burnt Orange bg + White tower ---- */
+  {
+    const S = 128, pad = 12;
+    const img = await svgToImage(detailedSvg(WHITE, WHITE, S - pad * 2, S - pad * 2));
+    const ctx = document.getElementById('store-a').getContext('2d');
+    // Rounded-rect background
+    const r = 16;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(S - r, 0); ctx.quadraticCurveTo(S, 0, S, r);
+    ctx.lineTo(S, S - r); ctx.quadraticCurveTo(S, S, S - r, S);
+    ctx.lineTo(r, S); ctx.quadraticCurveTo(0, S, 0, S - r);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fillStyle = BURNT_ORANGE;
+    ctx.fill();
+    ctx.drawImage(img, pad, pad, S - pad * 2, S - pad * 2);
+  }
+
+  /* ---- Store Icon B: Charcoal bg + Burnt Orange tower ---- */
+  {
+    const S = 128, pad = 12;
+    const img = await svgToImage(detailedSvg(BURNT_ORANGE, BURNT_ORANGE, S - pad * 2, S - pad * 2));
+    const ctx = document.getElementById('store-b').getContext('2d');
+    const r = 16;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(S - r, 0); ctx.quadraticCurveTo(S, 0, S, r);
+    ctx.lineTo(S, S - r); ctx.quadraticCurveTo(S, S, S - r, S);
+    ctx.lineTo(r, S); ctx.quadraticCurveTo(0, S, 0, S - r);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fillStyle = CHARCOAL;
+    ctx.fill();
+    ctx.drawImage(img, pad, pad, S - pad * 2, S - pad * 2);
+  }
+
+  /* ---- Small Promo Tile (440 × 280) ---- */
+  {
+    const W = 440, H = 280;
+    const ctx = document.getElementById('small-promo').getContext('2d');
+
+    // Background – Charcoal
+    ctx.fillStyle = CHARCOAL;
+    ctx.fillRect(0, 0, W, H);
+
+    // Tower (Burnt Orange on dark bg)
+    const iconH = 140;
+    const img = await svgToImage(detailedSvg(BURNT_ORANGE, BURNT_ORANGE, iconH, iconH));
+    ctx.drawImage(img, (W - iconH) / 2, 18, iconH, iconH);
+
+    // Title
+    ctx.fillStyle = WHITE;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 32px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('UT Instapoll Alert', W / 2, 168);
+
+    // Subtitle
+    ctx.fillStyle = LIMESTONE;
+    ctx.font = '18px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Never miss an attendance poll', W / 2, 210);
+
+    // Badge
+    ctx.fillStyle = BLUE_GRAY;
+    ctx.font = '13px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Free · Open Source · MIT License', W / 2, 248);
+  }
+
+  /* ---- Marquee Promo Tile (1400 × 560) ---- */
+  {
+    const W = 1400, H = 560;
+    const ctx = document.getElementById('marquee').getContext('2d');
+
+    // Background – Charcoal
+    ctx.fillStyle = CHARCOAL;
+    ctx.fillRect(0, 0, W, H);
+
+    // Accent stripe at bottom
+    ctx.fillStyle = BURNT_ORANGE;
+    ctx.fillRect(0, H - 8, W, 8);
+
+    // Tower (Burnt Orange on dark bg, left-centre)
+    const iconH = 360;
+    const img = await svgToImage(detailedSvg(BURNT_ORANGE, BURNT_ORANGE, iconH, iconH));
+    const iconX = W * 0.18;
+    ctx.drawImage(img, iconX - iconH / 2, (H - iconH) / 2, iconH, iconH);
+
+    // Text block (right side)
+    const textX = W * 0.56;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    ctx.fillStyle = WHITE;
+    ctx.font = 'bold 64px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('UT Instapoll Alert', textX, H * 0.35);
+
+    ctx.fillStyle = LIMESTONE;
+    ctx.font = '32px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Real-time poll alerts straight to your phone.', textX, H * 0.50);
+
+    ctx.fillStyle = BLUE_GRAY;
+    ctx.font = '24px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Free · Open Source · MIT License', textX, H * 0.64);
+  }
+
+})();
+</script>
+</body>
+</html>

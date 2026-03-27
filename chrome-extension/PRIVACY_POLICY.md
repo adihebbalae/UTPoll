@@ -56,6 +56,18 @@ If this policy changes, the updated version will be published in this repository
 
 ---
 
+## Non-Commercial Statement
+
+This extension is developed and distributed free of charge by a UT Austin student as a community tool. The developer receives no payment, donations, or other compensation. There are no advertisements, tracking pixels, or affiliate links anywhere in the extension.
+
+---
+
+## Disclaimer
+
+This extension is not affiliated with, endorsed by, or sponsored by The University of Texas at Austin. It operates solely within the user's own authenticated browser session.
+
+---
+
 ## Contact
 
-This extension is open source. For questions or concerns, open an issue at the GitHub repository linked in the Chrome Web Store listing.
+This extension is open source. For questions or concerns, open an issue at the project's GitHub repository.

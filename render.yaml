@@ -1,0 +1,23 @@
+# Render Blueprint — Instapoll Cloud Poll Notifier
+# https://render.com/docs/blueprint-spec
+#
+# Deploy steps:
+#   1. Push this repo to GitHub.
+#   2. In the Render dashboard → New → Blueprint → select this repo.
+#   3. Add the two env vars (COURSE_ID, NTFY_TOPIC) in the service settings.
+#   4. Each new semester: update COURSE_ID in the Render env var UI — the
+#      service will restart automatically.
+
+services:
+  - type: worker            # background worker — no HTTP port, never spins down
+    name: instapoll-notifier
+    runtime: python
+    rootDir: cloud          # all commands run from the cloud/ subdirectory
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: COURSE_ID
+        sync: false         # set manually in the Render dashboard
+      - key: NTFY_TOPIC
+        sync: false         # set manually in the Render dashboard
+    autoDeploy: true        # redeploy on every push to the default branch

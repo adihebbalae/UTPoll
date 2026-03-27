@@ -3,8 +3,45 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue.svg)
 ![Platform: Chrome](https://img.shields.io/badge/Platform-Chrome-green.svg)
+![Non-Commercial](https://img.shields.io/badge/Non--Commercial-Student%20Project-orange.svg)
 
-A Manifest V3 Chrome extension that monitors the UT Instapoll portal and fires an instant triple alert — audio chime, desktop notification, and optional push notification — the moment a live poll is detected. It piggybacks on requests the page already makes, so no extra network traffic is generated and no login credentials are needed.
+> **Free & open-source — made by a UT student, for UT students. No ads, no monetization, no affiliation with UT Austin.**
+
+Ever been deep in your notes during lecture and completely missed the Instapoll popup on your other monitor? This extension fires an audio chime, a desktop notification, and an optional phone push the instant a live poll appears — so you don't lose participation points while you're actively paying attention in class.
+
+It piggybacks on requests the page already makes, so no extra network traffic is generated and no login credentials are needed.
+
+---
+
+## Academic Integrity & Compliance
+
+> **This tool is intended to be used while physically attending class to ensure you do not miss a poll while taking notes. Using it to remotely answer polls for classes you are not attending is a violation of the [UT Honor Code](https://liberalarts.utexas.edu/dean/academic-integrity/index.php) and is not what this tool is for.**
+
+### ⚠️ Read this before enabling Auto-Submit
+
+This extension includes an **optional** auto-submit feature for attendance polls. **You are solely responsible for how you use it.**
+
+- UT Austin's [Institutional Rules on Student Services and Activities (Chapter 11)](https://catalog.utexas.edu/general-information/appendices/appendix-c/student-discipline-and-conduct/) and the [UT Honor Code](https://liberalarts.utexas.edu/dean/academic-integrity/index.php) require honest completion of all academic activities, including attendance.
+- **If your instructor expects physical presence, using auto-submit without attending constitutes academic dishonesty.** Do not enable it in that case.
+- The auto-submit feature only exists because some courses use Instapoll purely as an opt-in participation nudge where the instructor explicitly does not require in-person attendance. Use your judgment.
+
+### UT Acceptable Use Policy
+
+This extension complies with the [UT Acceptable Use Policy for Information Resources](https://security.utexas.edu/policies/acceptable-use):
+
+- It operates **entirely within your own authenticated browser session** — it reads only API responses your browser already receives, using no credentials beyond your existing login.
+- It makes **no unauthorized requests** to UT systems and does not access any data you are not already authorized to view.
+- It does **not scrape, store, or transmit** any student or course data to third-party servers (except the optional, user-configured ntfy.sh push, which contains no personal data — see [Privacy Policy](PRIVACY_POLICY.md)).
+- It does **not automate login** or bypass any authentication mechanism.
+
+### Non-Commercial & Open Source
+
+This project is a **free, non-commercial tool** distributed under the [MIT License](LICENSE):
+
+- The author receives **no payment, donations, or other compensation** from this extension.
+- There are **no ads, tracking, analytics, or affiliate links** of any kind.
+- The source code is fully open on GitHub for anyone to inspect, fork, or improve.
+- This is student-to-student community software, shared in the spirit of the UT open-source community.
 
 ---
 
@@ -145,6 +182,12 @@ MIT — see [LICENSE](LICENSE) for full text.
 ## Privacy
 
 This extension collects no personal data. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
+
+---
+
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or sponsored by The University of Texas at Austin, UT ITS, or any UT department. "Instapoll" and "UT" are used descriptively to identify the service this tool monitors. All trademarks belong to their respective owners.
 
 ---
 

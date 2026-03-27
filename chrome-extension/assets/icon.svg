@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128">
+  <g fill="none" stroke="#BF5700" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- ===== BASE (Y:55–95) ===== -->
+    <rect x="10" y="55" width="80" height="40" rx="5"/>
+    <line x1="10" y1="70" x2="90" y2="70"/>
+
+    <!-- Three dots (upper base band) -->
+    <circle cx="30" cy="62.5" r="3" fill="#BF5700" stroke="none"/>
+    <circle cx="50" cy="62.5" r="3" fill="#BF5700" stroke="none"/>
+    <circle cx="70" cy="62.5" r="3" fill="#BF5700" stroke="none"/>
+
+    <!-- Four pillars (lower base band) -->
+    <line x1="26" y1="70" x2="26" y2="95"/>
+    <line x1="42" y1="70" x2="42" y2="95"/>
+    <line x1="58" y1="70" x2="58" y2="95"/>
+    <line x1="74" y1="70" x2="74" y2="95"/>
+
+    <!-- ===== SHOULDERS (Y:40–55) ===== -->
+    <!-- Left shoulder (rounded top-left corner) -->
+    <path d="M 22,55 V 43 Q 22,40 25,40 H 32 V 55 Z"/>
+    <!-- Right shoulder (rounded top-right corner) -->
+    <path d="M 78,55 V 43 Q 78,40 75,40 H 68 V 55 Z"/>
+
+    <!-- ===== SHAFT (Y:15–55) ===== -->
+    <line x1="32" y1="55" x2="32" y2="15"/>
+    <line x1="68" y1="55" x2="68" y2="15"/>
+
+    <!-- Clock face (hollow) -->
+    <circle cx="50" cy="44" r="8"/>
+
+    <!-- Three inner shaft lines (above clock, Y:15→top of clock) -->
+    <line x1="41" y1="15" x2="41" y2="36"/>
+    <line x1="50" y1="15" x2="50" y2="36"/>
+    <line x1="59" y1="15" x2="59" y2="36"/>
+
+    <!-- ===== CROWN (Y:5–15) ===== -->
+    <!-- Lower cap (rounded top corners) -->
+    <path d="M 28,15 V 13.5 Q 28,12 30,12 H 70 Q 72,12 72,13.5 V 15 H 28 Z"/>
+    <!-- Upper cap (rounded top corners) -->
+    <path d="M 35,10 V 7 Q 35,5 37,5 H 63 Q 65,5 65,7 V 10 H 35 Z"/>
+
+  </g>
+</svg>

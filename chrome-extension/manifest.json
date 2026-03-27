@@ -5,7 +5,7 @@
   "description": "Monitors UT Instapoll and fires audio, desktop, and push alerts the moment a live poll is detected.",
 
   "permissions": ["notifications", "storage", "offscreen"],
-  "host_permissions": ["*://polls.la.utexas.edu/*", "https://ntfy.sh/*", "wss://pusher-ws.la.utexas.edu/*"],
+  "host_permissions": ["*://polls.la.utexas.edu/*", "https://ntfy.sh/*", "wss://pusher-ws.la.utexas.edu/*", "http://localhost:8080/*"],
 
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://ntfy.sh;"
@@ -16,7 +16,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://polls.la.utexas.edu/*"],
+      "matches": ["*://polls.la.utexas.edu/*", "http://localhost:8080/*"],
       "js": ["content.js"],
       "run_at": "document_start"
     }
@@ -40,7 +40,7 @@
   "web_accessible_resources": [
     {
       "resources": ["inject.js"],
-      "matches": ["*://polls.la.utexas.edu/*"]
+      "matches": ["*://polls.la.utexas.edu/*", "http://localhost:8080/*"]
     }
   ]
 }

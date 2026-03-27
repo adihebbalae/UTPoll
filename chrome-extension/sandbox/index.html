@@ -1,0 +1,565 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- CSRF token in the standard location that inject.js auto-submit reads -->
+  <meta name="csrf-token" content="sandbox-csrf-token-abc123xyz789" />
+  <title>UT Instapoll</title>
+  <!-- Google Fonts — matching the real site -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Raleway:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Font Awesome 5 Free (real site uses Pro from cdn.la.utexas.edu) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" />
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <style>
+    /* ── UT Austin Bootstrap overrides (mirroring app-CapZuueM.css) ──────── */
+    :root {
+      --ut-primary: #bf5700;
+      --ut-action:  #005f86;
+      --bs-body-font-family: "Libre Franklin", system-ui, -apple-system, sans-serif;
+      --bs-body-font-size: .9rem;
+      --bs-body-line-height: 1.6;
+      --bs-poll-status-running:  #579d42;
+      --bs-poll-status-inactive: #A9A9A9;
+      --bs-poll-status-complete: #6495ED;
+      --bs-selected-answer:      #00a9b7;
+      --bs-failure:              #d53722;
+    }
+    /* Override Bootstrap primary (blue -> UT Burnt Orange) */
+    .bg-primary     { background-color: #bf5700 !important; }
+    .text-primary   { color: #bf5700 !important; }
+    .border-primary { border-color: #bf5700 !important; }
+    .btn-primary {
+      --bs-btn-bg:                  #bf5700;
+      --bs-btn-border-color:        #bf5700;
+      --bs-btn-hover-bg:            #a34c00;
+      --bs-btn-hover-border-color:  #a34c00;
+      --bs-btn-active-bg:           #8b4000;
+      --bs-btn-active-border-color: #8b4000;
+      --bs-btn-color: #fff;
+    }
+    a { color: var(--ut-action); }
+    a:hover { color: #003d5a; }
+
+    /* ── Real-site layout rules (from app-CapZuueM.css) ──────────────────── */
+    html { position: relative; min-height: 100%; }
+    body { margin-bottom: 50px; }
+    nav.navbar#main-header {
+      height: 40px; line-height: 40px;
+      padding-top: 0; padding-bottom: 0;
+    }
+    #navbar-header-item-3 { display: none; }
+    nav#subheader {
+      height: 70px; line-height: 70px;
+      background-color: #fff;
+      border-bottom: solid 1px #d7d7d7;
+      padding-top: 0; padding-bottom: 0;
+    }
+    #app-logo { height: 44px; }
+    .footer {
+      position: absolute; bottom: 0; width: 100%;
+      height: 50px; line-height: 50px;
+      border-top: solid 1px #d7d7d7;
+      display: flex; align-items: center;
+    }
+    .table.table-itemlist th { font-weight: 400; text-transform: uppercase; }
+    .table.table-itemlist td { vertical-align: middle; }
+    .table.table-itemlist td.table-item-title-cell { font-weight: 700; }
+    .timer-box {
+      background-color: #ffe8a1;
+      padding: 6px 8px;
+      display: inline-block;
+      min-width: 6ch;
+      text-align: center;
+      font-family: monospace;
+      font-size: .85rem;
+    }
+    .timer-box.expired { background-color: #b94a48; color: #fff; }
+
+    /* ── Page-wrap (left=real site, right=sandbox panel) ─────────────────── */
+    .page-wrap {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 0 20px;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    .page-wrap > div:first-child > main {
+      margin-top: 15px;
+      margin-bottom: 80px;
+    }
+
+    /* ── Sandbox panel ────────────────────────────────────────────────────── */
+    .sandbox-panel {
+      position: sticky; top: 20px;
+      background: #fffdf5;
+      border: 1px solid #e0c060;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+    .sandbox-header {
+      background: #bf5700; color: white;
+      padding: 7px 12px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.4px; display: flex; align-items: center; gap: 6px;
+    }
+    .sandbox-body { padding: 10px 12px; }
+    .sandbox-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #888; margin: 10px 0 5px;
+    }
+    .sandbox-section-label:first-child { margin-top: 2px; }
+    .setup-hint {
+      background: #FFF3CD; border: 1px solid #FFDEA0;
+      border-radius: 4px; padding: 7px 9px;
+      font-size: 10.5px; line-height: 1.55;
+      color: #5c4100; margin-bottom: 2px;
+    }
+    .setup-hint code { font-size: 10px; background: rgba(0,0,0,.08); padding: 1px 3px; border-radius: 2px; }
+    .sb-btn {
+      display: block; width: 100%; padding: 8px 12px; margin-bottom: 5px;
+      border: none; border-radius: 5px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: opacity .15s, transform .1s;
+    }
+    .sb-btn:hover   { opacity: .88; }
+    .sb-btn:active  { transform: scale(.97); }
+    .sb-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .sb-btn-fire  { background: #D32F2F; color: white; }
+    .sb-btn-clear { background: #2E7D32; color: white; }
+    .sb-btn-reset { background: #EEEEEE; color: #333; font-size: 11px; }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: #555; padding: 3px 0;
+    }
+    .sb-api-info { font-size: 10px; color: #999; font-family: monospace; margin-top: 4px; }
+
+    /* ── Activity log ──────────────────────────────────────────────────────── */
+    .log {
+      font-family: 'Cascadia Code', 'Courier New', monospace; font-size: 10.5px;
+      background: #1E1E2E; color: #CDD6F4;
+      border-radius: 6px; padding: 10px; height: 160px; overflow-y: auto; margin-top: 4px;
+    }
+    .log::-webkit-scrollbar { width: 4px; }
+    .log::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+    .log-entry { padding: 1.5px 0; line-height: 1.4; }
+    .log-entry.live  { color: #F38BA8; }
+    .log-entry.clear { color: #A6E3A1; }
+    .log-entry.warn  { color: #FAB387; }
+    .log-entry.info  { color: #89B4FA; }
+    .log-ts { color: #6C7086; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Main header: burned orange, UT shield ─────────────────────────────── -->
+<nav class="navbar navbar-expand-md navbar-dark bg-primary" id="main-header">
+  <div class="container">
+    <div id="navbar-header-item-1"></div>
+    <div id="navbar-header-item-2">
+      <!-- Simplified UT shield (white) -->
+      <svg xmlns="http://www.w3.org/2000/svg" height="30" viewBox="0 0 160 170"
+           aria-label="The University of Texas at Austin" role="img">
+        <path fill="white" d="M 12,8 H 148 V 128 Q 148,168 80,180 Q 12,168 12,128 Z"/>
+        <rect x="72" y="30" width="16" height="55" fill="#bf5700"/>
+        <rect x="60" y="75" width="40" height="18" fill="#bf5700"/>
+        <rect x="50" y="85" width="60" height="15" fill="#bf5700"/>
+        <rect x="75" y="18" width="10" height="16" fill="#bf5700"/>
+        <text x="80" y="125" text-anchor="middle" font-family="Georgia,serif" font-size="12"
+              fill="#bf5700" font-weight="bold" letter-spacing="0.5">THE UNIVERSITY OF TEXAS</text>
+      </svg>
+    </div>
+    <div id="navbar-header-item-3"></div>
+  </div>
+</nav>
+
+<!-- ── Subheader: white, UT Instapoll logo + Help button ─────────────────── -->
+<nav class="navbar navbar-expand-md navbar-light" id="subheader">
+  <div class="container">
+    <a class="navbar-brand p-0 me-0" href="#">
+      <!-- UT Instapoll logo: tower icon + wordmark -->
+      <svg id="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 305 52"
+           aria-label="UT Instapoll" role="img">
+        <!-- Tower (scaled from assets/icon.svg) -->
+        <g fill="none" stroke="#bf5700" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+           transform="translate(1, 1) scale(0.49)">
+          <rect x="10" y="55" width="80" height="40" rx="5"/>
+          <line x1="10" y1="70" x2="90" y2="70"/>
+          <circle cx="30" cy="62.5" r="3" fill="#bf5700" stroke="none"/>
+          <circle cx="50" cy="62.5" r="3" fill="#bf5700" stroke="none"/>
+          <circle cx="70" cy="62.5" r="3" fill="#bf5700" stroke="none"/>
+          <line x1="26" y1="70" x2="26" y2="95"/>
+          <line x1="42" y1="70" x2="42" y2="95"/>
+          <line x1="58" y1="70" x2="58" y2="95"/>
+          <line x1="74" y1="70" x2="74" y2="95"/>
+          <path d="M 22,55 V 43 Q 22,40 25,40 H 32 V 55 Z"/>
+          <path d="M 78,55 V 43 Q 78,40 75,40 H 68 V 55 Z"/>
+          <line x1="32" y1="55" x2="32" y2="15"/>
+          <line x1="68" y1="55" x2="68" y2="15"/>
+          <circle cx="50" cy="44" r="8"/>
+          <line x1="41" y1="15" x2="41" y2="36"/>
+          <line x1="50" y1="15" x2="50" y2="36"/>
+          <line x1="59" y1="15" x2="59" y2="36"/>
+          <path d="M 28,15 V 13.5 Q 28,12 30,12 H 70 Q 72,12 72,13.5 V 15 H 28 Z"/>
+          <path d="M 35,10 V 7 Q 35,5 37,5 H 63 Q 65,5 65,7 V 10 H 35 Z"/>
+        </g>
+        <!-- Wordmark -->
+        <text x="56" y="36" font-family="Raleway, sans-serif" font-size="26" font-weight="600"
+              fill="#bf5700" letter-spacing="-0.3">UT Instapoll</text>
+      </svg>
+    </a>
+    <div class="ms-auto">
+      <a href="#" class="btn btn-sm btn-secondary" onclick="return false;">Help</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Two-column layout ──────────────────────────────────────────────────── -->
+<div class="page-wrap">
+
+  <!-- Left column: real site content -->
+  <div>
+    <!-- Toast container (matches real site position) -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;"></div>
+
+    <main role="main">
+      <div id="student_app">
+
+        <!-- Course / heading row -->
+        <div class="row mb-2">
+          <div class="col-6">
+            <h4 class="text-primary">Current Polls</h4>
+            <h6>Sp26 - COMPUTER ARCHITECTURE (12345)</h6>
+          </div>
+          <div class="col-6">
+            <div class="float-end">
+              <button class="btn btn-primary btn-sm">View Past Polls</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="d-none d-md-block">
+          <table class="table table-hover table-itemlist">
+            <thead>
+              <tr>
+                <th></th>
+                <th></th>
+                <th>Status</th>
+                <th>Time Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Idle row: waiting for polls -->
+              <tr id="pollIdleRow">
+                <td colspan="4" class="text-center py-4">
+                  <div>Waiting for new polls&hellip;&nbsp;<i class="fas fa-circle-notch fa-spin text-secondary"></i></div>
+                  <br>
+                  <span style="font-size:80%">Missing a poll?
+                    <a href="#" onclick="return false;" style="color:var(--ut-action)">Check for new polls</a>
+                  </span>
+                </td>
+              </tr>
+              <!-- Live poll row (shown when firePoll() fires) -->
+              <tr id="pollStatusBox" style="display:none;">
+                <td class="table-item-title-cell" style="width:42%">
+                  <span id="psTitle">Attendance Check</span>
+                  <small class="d-block text-muted fw-normal mt-1" id="psSub">CS 301 &middot; Computer Architecture &middot; Unique #12345</small>
+                </td>
+                <td><span id="psIcon"></span></td>
+                <td>
+                  <span id="cs301badge" class="badge rounded-pill"
+                        style="background-color:var(--bs-poll-status-running);font-size:.75rem;padding:.35em .7em;color:white;">
+                    Running
+                  </span>
+                </td>
+                <td>
+                  <span class="timer-box" id="pollTimerBadge">10:00</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile fallback -->
+        <div class="d-block d-md-none text-center py-4 text-muted">
+          Waiting for new polls&hellip; <i class="fas fa-circle-notch fa-spin"></i>
+        </div>
+
+        <!-- Attendance submission card (visible only when a poll is live) -->
+        <div id="pollForm" class="d-none mt-2 mb-4">
+          <div class="card border-warning shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title mb-1">&#128203; Attendance Check</h6>
+              <p class="card-text text-muted small mb-3">
+                Please confirm your attendance for today's lecture.
+                Your response will be recorded automatically.
+              </p>
+              <button class="btn btn-warning" onclick="handleSubmit()">Submit Attendance</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /student_app -->
+    </main>
+  </div><!-- /left column -->
+
+  <!-- Right column: sandbox controls (hidden in screenshot capture mode) -->
+  <div>
+    <div class="sandbox-panel">
+      <div class="sandbox-header">
+        <i class="fas fa-flask" style="font-size:10px;"></i>
+        Developer Sandbox
+      </div>
+      <div class="sandbox-body">
+        <div class="setup-hint">
+          <strong>Before using:</strong><br>
+          1. Extension loaded at <code>chrome://extensions</code><br>
+          2. Reload extension after manifest change<br>
+          3. Popup Course ID = <code>12345</code> or blank<br>
+          4. Served via <code>serve.ps1</code> on :8080
+        </div>
+
+        <div class="sandbox-section-label">Poll Controls</div>
+        <button class="sb-btn sb-btn-fire" id="btnFire" onclick="firePoll()">
+          &#x1F534; Fire Live Poll
+        </button>
+        <button class="sb-btn sb-btn-clear" id="btnClear" onclick="clearPoll()" disabled>
+          &#x2705; Clear Poll
+        </button>
+        <button class="sb-btn sb-btn-reset" onclick="resetAll()">
+          &#x1F504; Reset All State
+        </button>
+
+        <div class="sandbox-section-label">Options</div>
+        <div class="toggle-row">
+          <label for="autoSubmitChk">Simulate auto-submit</label>
+          <input type="checkbox" id="autoSubmitChk">
+        </div>
+        <div class="toggle-row">
+          <label for="doubleFireChk">Double-fire (satisfy debounce)</label>
+          <input type="checkbox" id="doubleFireChk" checked>
+        </div>
+
+        <div class="sandbox-section-label">Activity Log</div>
+        <div id="sbApiInfo" class="sb-api-info">API: not yet polled</div>
+        <div class="log" id="activityLog">
+          <div class="log-entry info">
+            <span class="log-ts">[init]</span>Sandbox ready &mdash; waiting for action
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /right column -->
+
+</div><!-- /page-wrap -->
+
+<!-- ── Footer ──────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="float-end d-flex align-items-center gap-2" style="line-height:1;">
+      <span class="text-muted small">Provided by</span>
+      <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 250 16"
+           aria-label="Liberal Arts Development Studio" role="img">
+        <text x="0" y="13" font-family="Raleway, sans-serif" font-size="13" fill="#bf5700"
+              font-weight="600" letter-spacing="0.3">Liberal Arts Development Studio</text>
+      </svg>
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap 5 JS bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* =============================================================================
+   Sandbox Controller
+   Simulates the exact messages that inject.js produces so content.js ->
+   background.js -> alerts fire exactly as they would on the real portal.
+   ============================================================================= */
+'use strict';
+
+// -- Mock poll payload (matches the shape inject.js parses) -------------------
+const MOCK_POLL = [
+  {
+    id:          1,
+    type:        'attendance',
+    title:       'Attendance Check',
+    status:      'open',
+    course_id:   12345,
+    config_json: [],          // empty = trivial attendance, triggers auto-submit
+    created_at:  new Date().toISOString(),
+  },
+];
+
+// -- State --------------------------------------------------------------------
+let pollLive  = false;
+let countdownInterval = null;
+let secondsLeft = 600;
+
+// -- Core: dispatch messages exactly as inject.js would -----------------------
+function dispatchLive()  {
+  window.postMessage({ type: 'UTPOLL_LIVE', data: MOCK_POLL }, '*');
+}
+function dispatchIdle()  {
+  window.postMessage({ type: 'UTPOLL_IDLE', data: [] }, '*');
+}
+
+// -- Poll controls ------------------------------------------------------------
+function firePoll() {
+  if (pollLive) return;
+  pollLive = true;
+
+  const double = document.getElementById('doubleFireChk').checked;
+  dispatchLive();
+  if (double) {
+    // Second message ~200 ms later satisfies the 2-detections debounce.
+    setTimeout(dispatchLive, 200);
+    log('live', '&#x1F534; UTPOLL_LIVE dispatched x2 (debounce satisfied) -- alerts should fire');
+  } else {
+    log('live', '&#x1F534; UTPOLL_LIVE dispatched x1 (debounce NOT yet satisfied)');
+  }
+  updateUI(true);
+}
+
+function clearPoll() {
+  if (!pollLive) return;
+  pollLive = false;
+  dispatchIdle();
+  updateUI(false);
+  log('clear', '&#x2705; UTPOLL_IDLE dispatched -- extension should reset to monitoring');
+}
+
+function resetAll() {
+  pollLive = false;
+  dispatchIdle();
+  updateUI(false);
+  log('info', '&#x1F504; State reset');
+}
+
+// -- Countdown timer ----------------------------------------------------------
+function startCountdown() {
+  secondsLeft = 600;
+  const badge = document.getElementById('pollTimerBadge');
+  badge.classList.remove('expired');
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    secondsLeft = Math.max(0, secondsLeft - 1);
+    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+    const s = (secondsLeft % 60).toString().padStart(2, '0');
+    badge.textContent = m + ':' + s;
+    if (secondsLeft <= 60) badge.classList.add('expired');
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  const badge = document.getElementById('pollTimerBadge');
+  badge.textContent = '10:00';
+  badge.classList.remove('expired');
+}
+
+// -- UI updates ---------------------------------------------------------------
+function updateUI(live) {
+  const idleRow = document.getElementById('pollIdleRow');
+  const liveRow = document.getElementById('pollStatusBox');
+  const icon    = document.getElementById('psIcon');
+  const title   = document.getElementById('psTitle');
+  const sub     = document.getElementById('psSub');
+  const form    = document.getElementById('pollForm');
+  const badge   = document.getElementById('cs301badge');
+
+  if (live) {
+    idleRow.style.display = 'none';
+    liveRow.style.display = '';
+    icon.textContent  = '';
+    title.textContent = 'Attendance Check';
+    sub.textContent   = 'CS 301 \u00b7 Computer Architecture \u00b7 Unique #12345';
+    form.classList.remove('d-none');
+    badge.style.backgroundColor = 'var(--bs-poll-status-running)';
+    badge.textContent = 'Running';
+    startCountdown();
+  } else {
+    idleRow.style.display = '';
+    liveRow.style.display = 'none';
+    form.classList.add('d-none');
+    // Restore poll form HTML (in case handleSubmit() replaced it)
+    form.innerHTML = '<div class="card border-warning shadow-sm"><div class="card-body">'
+      + '<h6 class="card-title mb-1">&#128203; Attendance Check</h6>'
+      + '<p class="card-text text-muted small mb-3">Please confirm your attendance for today\'s lecture. Your response will be recorded automatically.</p>'
+      + '<button class="btn btn-warning" onclick="handleSubmit()">Submit Attendance</button>'
+      + '</div></div>';
+    badge.style.backgroundColor = '#A9A9A9';
+    badge.textContent = 'Inactive';
+    stopCountdown();
+  }
+
+  document.getElementById('btnFire').disabled  = live;
+  document.getElementById('btnClear').disabled = !live;
+}
+
+function handleSubmit() {
+  log('info', '&#x1F4E4; Attendance submitted (sandbox simulation)');
+  document.getElementById('pollForm').innerHTML =
+    '<p class="text-success fw-semibold" style="font-size:13px;">&#x2705; Response recorded &mdash; thank you!</p>';
+}
+
+// -- Activity log -------------------------------------------------------------
+function log(type, msg) {
+  const logEl = document.getElementById('activityLog');
+  const ts    = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const el    = document.createElement('div');
+  el.className = 'log-entry ' + type;
+  el.innerHTML = '<span class="log-ts">[' + ts + ']</span>' + esc(msg);
+  logEl.appendChild(el);
+  logEl.scrollTop = logEl.scrollHeight;
+  while (logEl.children.length > 80) logEl.removeChild(logEl.firstChild);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// -- Periodic API simulation --------------------------------------------------
+// Makes real fetch calls so inject.js network intercept also fires.
+let apiCallCount = 0;
+
+(async function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('/mock-sw.js');
+    log('info', '&#x1F527; mock-sw.js registered -- API fetch path active');
+  } catch (_) {
+    log('info', '&#x26A0; Service Worker unavailable -- using postMessage path only');
+  }
+})();
+
+setInterval(async () => {
+  apiCallCount++;
+  const dbg = document.getElementById('sbApiInfo');
+  if (dbg) dbg.textContent = 'API: polled ' + apiCallCount + '\u00d7 \u00b7 ' + new Date().toLocaleTimeString();
+
+  try {
+    const bc = new BroadcastChannel('utpoll-sandbox');
+    bc.postMessage({ action: 'setPollState', live: pollLive });
+    bc.close();
+    await fetch('/api/v1/student/course/12345/poll');
+  } catch (_) {
+    // No SW or network -- postMessage path handles alerts.
+  }
+}, 3000);
+
+// -- Listen for inject.js relay messages (log visibility) ---------------------
+window.addEventListener('message', (e) => {
+  if (e.source !== window) return;
+  const { type, data } = e.data || {};
+  if (type === 'UTPOLL_LIVE')  log('live',  '&#x1F4E1; inject.js relayed UTPOLL_LIVE (' + (data||[]).length + ' poll(s))');
+  if (type === 'UTPOLL_IDLE')  log('clear', '&#x1F4E1; inject.js relayed UTPOLL_IDLE');
+});
+</script>
+</body>
+</html>
