@@ -1,0 +1,22 @@
+[Unit]
+Description=Instapoll Cloud Poll Notifier
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/instapoll
+ExecStart=/opt/instapoll/venv/bin/python main.py
+Restart=on-failure
+RestartSec=10
+
+# Load COURSE_ID and NTFY_TOPIC from a file that is NOT in the repo
+EnvironmentFile=/opt/instapoll/.env
+
+# Safety: no unnecessary privileges
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
