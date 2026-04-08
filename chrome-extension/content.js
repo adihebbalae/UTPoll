@@ -1,30 +1,41 @@
 /**
  * content.js — Content script; runs at document_start on polls.la.utexas.edu.
- * 1. Reads settings from storage and injects config + inject.js into the page context.
- * 2. Maintains a runtime port so background.js can track page liveness.
- * 3. Bridges window.postMessage → chrome.runtime.sendMessage.
+ * 1. Injects inject.js synchronously (before any await) to guarantee window.WebSocket
+ *    is patched before the page's own scripts establish a Pusher connection.
+ * 2. Reads actual settings from storage and sends them to inject.js via postMessage.
+ * 3. Maintains a runtime port so background.js can track page liveness.
+ * 4. Bridges window.postMessage → chrome.runtime.sendMessage.
  */
 'use strict';
 
+// ── Step 1: inject immediately (synchronous, before any await) ────────────────
+// Using safe defaults so WebSocket is patched before any page script runs.
+// Actual user settings are forwarded below once storage responds.
+{
+  const root = document.head || document.documentElement;
+  const s = document.createElement('script');
+  s.src = chrome.runtime.getURL('inject.js');
+  s.dataset.pattern    = '/api/v1/student/course/*/poll';
+  s.dataset.courseId   = '';
+  s.dataset.autosubmit = '0';
+  s.onload = () => s.remove();
+  root.appendChild(s);
+}
+
+// ── Step 2: load actual user settings and forward to inject.js ────────────────
 (async () => {
-  // Read the configuration settings before injecting so inject.js can use them.
   const { apiPattern, courseId, enableAutoSubmit } = await chrome.storage.sync.get({
     apiPattern: '/api/v1/student/course/*/poll',
     courseId: '',
     enableAutoSubmit: false,
   });
-
-  const root = document.head || document.documentElement;
-
-  // Inject the intercept script into the page context.
-  // Config is passed via data-* attributes to avoid inline scripts (CSP-safe).
-  const s = document.createElement('script');
-  s.src = chrome.runtime.getURL('inject.js');
-  s.dataset.pattern     = apiPattern;
-  s.dataset.courseId    = courseId;
-  s.dataset.autosubmit  = enableAutoSubmit ? '1' : '0';
-  s.onload = () => s.remove();
-  root.appendChild(s);
+  // inject.js listens for this message to update its live configuration.
+  window.postMessage({
+    type:        'UTPOLL_CONFIG',
+    pattern:     apiPattern,
+    courseId:    courseId,
+    autosubmit:  enableAutoSubmit ? '1' : '0',
+  }, '*');
 })();
 
 // Establish a persistent port so background.js can detect page liveness.

@@ -10,12 +10,23 @@
  */
 'use strict';
 
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
+const UNINSTALL_URL = 'https://llamafnc-tech.github.io/goodbye/goodbye.html';
+
+chrome.runtime.setUninstallURL(UNINSTALL_URL);
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === chrome.runtime.OnInstalledReason.INSTALL) {
+    chrome.tabs.create({ url: chrome.runtime.getURL('welcome/welcome.html') });
+  }
+});
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let alertState    = 'IDLE';   // 'IDLE' | 'ALERTED'
 let debounceCount = 0;
 let debounceTimer = null;
 
-const DEBOUNCE_THRESHOLD = 2;
+const DEBOUNCE_THRESHOLD = 1;
 const DEBOUNCE_WINDOW_MS = 5000;
 
 // ── Page-liveness tracking via runtime ports ──────────────────────────────────

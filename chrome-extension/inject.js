@@ -12,10 +12,12 @@
   'use strict';
 
   // Config is passed via data-* attributes on the <script> element (CSP-safe — no inline scripts).
-  const scriptEl    = document.currentScript;
-  const patternStr  = (scriptEl && scriptEl.dataset.pattern)     || '/api/v1/student/course/*/poll';
-  const courseId    = (scriptEl && scriptEl.dataset.courseId)    || '';
-  const autoSubmit  = (scriptEl && scriptEl.dataset.autosubmit) === '1';
+  // content.js also posts a UTPOLL_CONFIG message once storage has loaded so that the
+  // accurate user settings are applied even though inject.js starts with safe defaults.
+  const scriptEl   = document.currentScript;
+  let patternStr   = (scriptEl && scriptEl.dataset.pattern)    || '/api/v1/student/course/*/poll';
+  let courseId     = (scriptEl && scriptEl.dataset.courseId)   || '';
+  let autoSubmit   = (scriptEl && scriptEl.dataset.autosubmit) === '1';
 
   /** Convert a glob-style pattern (only * is special) to a RegExp. */
   function globToRegex(glob) {
@@ -24,7 +26,16 @@
     return new RegExp(escaped.replace(/\*/g, '[^/?]+'));
   }
 
-  const POLL_PATTERN = globToRegex(patternStr);
+  let POLL_PATTERN = globToRegex(patternStr);
+
+  // Receive the real user settings from content.js once chrome.storage resolves.
+  window.addEventListener('message', (event) => {
+    if (event.source !== window || !event.data || event.data.type !== 'UTPOLL_CONFIG') return;
+    const cfg = event.data;
+    if (cfg.pattern)  { patternStr = cfg.pattern; POLL_PATTERN = globToRegex(patternStr); }
+    if (cfg.courseId !== undefined) courseId   = cfg.courseId;
+    if (cfg.autosubmit !== undefined) autoSubmit = cfg.autosubmit === '1';
+  });
 
   /** Returns true if the URL is a poll endpoint that should be monitored. */
   function shouldIntercept(url) {
