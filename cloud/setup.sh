@@ -65,11 +65,23 @@ else
     echo "  (Find it in the URL when you open a course: polls.la.utexas.edu/student/course/XXXX/...)"
     read -r -p "  COURSE_ID: " COURSE_ID
 
+    # Validate COURSE_ID is numeric.
+    if ! [[ "$COURSE_ID" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: COURSE_ID must be a number (e.g. 6104)"
+        exit 1
+    fi
+
     echo ""
     echo "  Enter your ntfy.sh topic name."
     echo "  Use a long random string — anyone who knows it can read your notifications."
     echo "  Generate one with: python3 -c \"import uuid; print(uuid.uuid4())\""
     read -r -p "  NTFY_TOPIC: " NTFY_TOPIC
+
+    # Validate no newlines or whitespace in topic (prevents env var injection).
+    if [[ "$NTFY_TOPIC" =~ [[:space:]] ]]; then
+        echo "ERROR: NTFY_TOPIC must not contain spaces or newlines"
+        exit 1
+    fi
 
     # Write .env with restricted permissions (owner-read only)
     cat > "$ENV_FILE" <<EOF

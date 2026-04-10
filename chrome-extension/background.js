@@ -26,7 +26,7 @@ let alertState    = 'IDLE';   // 'IDLE' | 'ALERTED'
 let debounceCount = 0;
 let debounceTimer = null;
 
-const DEBOUNCE_THRESHOLD = 1;
+const DEBOUNCE_THRESHOLD = 2;
 const DEBOUNCE_WINDOW_MS = 5000;
 
 // ── Page-liveness tracking via runtime ports ──────────────────────────────────

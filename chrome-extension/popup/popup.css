@@ -149,7 +149,6 @@ input[type="text"]:focus { border-color: #bf5700; }
 
 .btn-primary,
 .btn-secondary {
-  flex: 1;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -158,6 +157,9 @@ input[type="text"]:focus { border-color: #bf5700; }
   border: none;
   transition: opacity 0.15s;
 }
+
+.action-row .btn-primary  { flex: 1; }
+.action-row .btn-secondary { flex: 1; }
 
 .btn-primary            { background: #bf5700; color: #fff; }
 .btn-secondary          { background: #2b2b2b; color: #bbb; border: 1px solid #3a3a3a; }

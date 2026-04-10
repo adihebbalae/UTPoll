@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UT Instapoll Alert — Installed</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+
+  <main>
+
+    <header class="page-header">
+      <img src="../assets/icon-48.png" alt="" class="icon" width="40" height="40">
+      <div>
+        <h1>UT Instapoll Alert</h1>
+        <p class="subtitle">You're all set.</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>Open <a href="https://polls.la.utexas.edu" target="_blank" rel="noopener noreferrer">polls.la.utexas.edu</a></strong>
+            <p>Keep this tab open during class. The extension activates automatically when you're on the site.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>Sit back</strong>
+            <p>The extension watches for live polls in the background. You don't need to keep the tab visible.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>You'll hear it when a poll opens</strong>
+            <p>A chime and desktop notification fire the instant a poll is detected — before you'd ever see it manually.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <div class="tip">
+      <span class="tip-label">Tip</span>
+      <p>Right-click the <strong>puzzle piece</strong> icon in your toolbar and select <strong>Pin</strong> to keep the extension visible. The icon shows a live status dot while you're on Instapoll.</p>
+    </div>
+
+    <div class="actions">
+      <a href="https://polls.la.utexas.edu" target="_blank" rel="noopener noreferrer" class="btn-primary">Open Instapoll →</a>
+      <button class="btn-audio" id="testChimeBtn" type="button">&#9654; Test chime</button>
+    </div>
+
+    <p class="configure-hint">To configure notifications or push alerts, click the extension icon in your toolbar.</p>
+
+    <!-- ── ntfy Setup ─────────────────────────────────────────────────────── -->
+    <section class="card" id="ntfy-setup">
+      <h2>&#128241; Phone alerts via ntfy.sh</h2>
+      <p class="card-intro">Set this up once and your phone will buzz the instant a poll opens — even with your laptop muted or across the room. Takes about 3 minutes.</p>
+
+      <div class="ntfy-why">
+        <span class="ntfy-why-icon">&#9888;&#65039;</span>
+        <p>Desktop notifications only work while your laptop screen is awake and Chrome is focused. Phone pushes reach you <em>no matter what</em>.</p>
+      </div>
+
+      <ol class="steps ntfy-steps">
+
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>Download the ntfy app on your phone</strong>
+            <p>ntfy is free and open-source — no account required. Pick your platform:</p>
+            <div class="platform-btns">
+              <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener noreferrer" class="platform-btn android">
+                &#x1F4F4; Android &mdash; Google Play
+              </a>
+              <a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener noreferrer" class="platform-btn ios">
+                &#x1F34F; iPhone &mdash; App Store
+              </a>
+            </div>
+            <p class="step-note">Android users: the <a href="https://f-droid.org/en/packages/io.heckel.ntfy/" target="_blank" rel="noopener noreferrer">F-Droid</a> version is also available and delivers messages faster (uses no Google services).</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>Pick a private topic name</strong>
+            <p>Your topic name is like a secret password — <em>anyone who knows it can receive your notifications</em>. Pick something random and personal. Good examples:</p>
+            <div class="topic-examples">
+              <code>jdoe-ut-polls-2026</code>
+              <code>longhorn42_alerts</code>
+              <code>ecs347-myalerts</code>
+            </div>
+            <div class="tip tip-inline">
+              <span class="tip-label">Tip</span>
+              <p>Mix your name initials with a random number. Avoid anything guessable like <code>utpoll</code> or your EID alone.</p>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>Subscribe to your topic in the ntfy app</strong>
+            <p>Open the ntfy app you just installed and add a subscription:</p>
+            <div class="substep-block">
+              <div class="substep">
+                <span class="substep-badge android-badge">Android</span>
+                <p>Tap the <strong>&#x002B;</strong> button at the bottom-right &rarr; type your topic name &rarr; tap <strong>Subscribe</strong>.</p>
+              </div>
+              <div class="substep">
+                <span class="substep-badge ios-badge">iPhone</span>
+                <p>Tap <strong>&#x002B;</strong> in the top-right corner &rarr; type your topic name &rarr; tap <strong>Subscribe</strong>.</p>
+              </div>
+            </div>
+            <p class="step-note">Leave the server as <strong>ntfy.sh</strong> (the default). Do not change it.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <strong>Enable push alerts in the extension</strong>
+            <p>Click the <strong>UT Instapoll Alert</strong> icon in your Chrome toolbar (puzzle-piece menu if it's not pinned).</p>
+            <ol class="inline-steps">
+              <li>Toggle <strong>Phone push (ntfy.sh)</strong> to ON.</li>
+              <li>Type your topic name into the field exactly as you entered it in the app.</li>
+              <li>Click <strong>Save</strong>.</li>
+            </ol>
+            <div class="tip tip-inline">
+              <span class="tip-label">Tip</span>
+              <p>To pin the extension: right-click the puzzle-piece &#x1F9E9; icon &rarr; <strong>Pin</strong>. The icon shows a live status dot while Instapoll is open.</p>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <strong>Send a test notification</strong>
+            <p>In the extension popup, click <strong>Send test push</strong>. Your phone should buzz within 1&ndash;3 seconds. If it does &mdash; you're done. &#x2705;</p>
+            <p class="step-note">Phone didn't buzz? Scroll down to the FAQ for troubleshooting steps.</p>
+          </div>
+        </li>
+
+      </ol>
+    </section>
+
+    <!-- ── ntfy FAQ ────────────────────────────────────────────────────────── -->
+    <section class="card" id="ntfy-faq">
+      <h2>&#10067; Phone alerts FAQ</h2>
+
+      <details class="faq-item">
+        <summary>Is ntfy free? Do I need to pay or sign up?</summary>
+        <div class="faq-body">
+          <p>ntfy is completely free for basic use. You do <strong>not</strong> need to create an account to use the public <code>ntfy.sh</code> server. Just install the app, subscribe to a topic, and you're ready. No email, no credit card, nothing.</p>
+          <p>Paid plans exist if you want <em>reserved topic names</em> (to prevent strangers from guessing your topic), but a sufficiently random topic name makes this unnecessary for most users.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>What's a good topic name? How private is it?</summary>
+        <div class="faq-body">
+          <p>On the public <code>ntfy.sh</code> server, topic names are <strong>not private by default</strong> — anyone who knows your exact topic name can subscribe to it and read your notifications. To stay safe:</p>
+          <ul>
+            <li>Use at least 10–15 characters that mix letters and numbers.</li>
+            <li>Include something personal (initials, a number only you know).</li>
+            <li>Avoid dictionary words, your EID alone, course numbers alone, or anything obviously guessable.</li>
+          </ul>
+          <p>Example of a <em>bad</em> name: <code>utpoll</code>. Example of a <em>good</em> name: <code>jdoe-polls-4827</code>.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>My phone didn't buzz after the test. What's wrong?</summary>
+        <div class="faq-body">
+          <p>Work through this checklist:</p>
+          <ol>
+            <li><strong>Check the topic name matches exactly</strong> — it is case-sensitive. <code>MyTopic</code> ≠ <code>mytopic</code>.</li>
+            <li><strong>Open the ntfy app</strong> and confirm you see the subscription listed. If not, re-add it.</li>
+            <li><strong>Check Do Not Disturb / Focus mode</strong> on your phone — these can silently block notifications.</li>
+            <li><strong>Android only:</strong> Go to <em>Settings &rarr; Apps &rarr; ntfy &rarr; Notifications</em> and make sure notifications are allowed.</li>
+            <li><strong>iPhone only:</strong> Go to <em>Settings &rarr; ntfy &rarr; Notifications</em> and set <em>Allow Notifications</em> to ON.</li>
+            <li><strong>Try enabling Instant Delivery</strong> (Android only) — in the ntfy app, long-press your subscription &rarr; <em>Enable instant delivery</em>. This bypasses Firebase and is more reliable.</li>
+            <li>Wait up to 30 seconds — the first message occasionally takes a moment if the app is freshly installed.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Will ntfy drain my phone battery?</summary>
+        <div class="faq-body">
+          <p>Minimal impact. The standard mode uses Firebase Cloud Messaging (same infrastructure Gmail and every major app uses), which is battery-optimized by Android. The "Instant Delivery" mode runs a lightweight foreground service; it shows a persistent notification but has negligible power draw in practice.</p>
+          <p>The iOS app uses Apple Push Notification Service (APNs) — as battery-efficient as any other iOS app notification.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Can I receive alerts on multiple phones or devices?</summary>
+        <div class="faq-body">
+          <p>Yes. Subscribe to the <strong>same topic name</strong> on every device you want to receive alerts on. All subscribed devices will receive the notification simultaneously. This is useful if you want both your phone and a tablet to buzz.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Are my Instapoll notifications stored anywhere?</summary>
+        <div class="faq-body">
+          <p>Messages sent to a topic on <code>ntfy.sh</code> are cached briefly on ntfy's servers (typically for a few hours) in case your phone is offline. ntfy's <a href="https://docs.ntfy.sh/privacy/" target="_blank" rel="noopener noreferrer">privacy policy</a> states they do not sell data or use it for advertising. The notifications contain only the poll alert text — no UT credentials or student data of any kind.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>What if I change my topic name later?</summary>
+        <div class="faq-body">
+          <p>Just update it in two places:</p>
+          <ol>
+            <li>In the ntfy app — add the new topic as a new subscription (you can remove the old one).</li>
+            <li>In the extension popup — update the topic field and click Save.</li>
+          </ol>
+          <p>There's no account to update — the topic name <em>is</em> the subscription.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Does this work if my phone is in another room or on silent?</summary>
+        <div class="faq-body">
+          <p>Push notifications arrive regardless of distance. If your phone is on <em>Silent</em> mode, the notification will still appear in your notification shade (you'll feel a vibration if vibrate-on-silent is enabled). If your phone is in <em>Do Not Disturb</em>, notifications may be suppressed — check your Focus/DND settings and add ntfy as an exception if needed.</p>
+        </div>
+      </details>
+
+    </section>
+
+  </main>
+
+  <script src="welcome.js"></script>
+</body>
+</html>

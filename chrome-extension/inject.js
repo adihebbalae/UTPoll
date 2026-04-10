@@ -18,6 +18,7 @@
   let patternStr   = (scriptEl && scriptEl.dataset.pattern)    || '/api/v1/student/course/*/poll';
   let courseId     = (scriptEl && scriptEl.dataset.courseId)   || '';
   let autoSubmit   = (scriptEl && scriptEl.dataset.autosubmit) === '1';
+  const configNonce = (scriptEl && scriptEl.dataset.nonce)      || '';
 
   /** Convert a glob-style pattern (only * is special) to a RegExp. */
   function globToRegex(glob) {
@@ -29,8 +30,10 @@
   let POLL_PATTERN = globToRegex(patternStr);
 
   // Receive the real user settings from content.js once chrome.storage resolves.
+  // Requires a matching nonce to prevent spoofing by other page scripts.
   window.addEventListener('message', (event) => {
     if (event.source !== window || !event.data || event.data.type !== 'UTPOLL_CONFIG') return;
+    if (!configNonce || event.data.nonce !== configNonce) return;
     const cfg = event.data;
     if (cfg.pattern)  { patternStr = cfg.pattern; POLL_PATTERN = globToRegex(patternStr); }
     if (cfg.courseId !== undefined) courseId   = cfg.courseId;
@@ -79,6 +82,9 @@
       headers['X-CSRF-TOKEN'] = csrfToken;
       headers['X-XSRF-TOKEN'] = csrfToken;
     }
+
+    // Validate IDs are numeric to prevent path traversal.
+    if (!/^\d+$/.test(String(poll.course_id)) || !/^\d+$/.test(String(poll.id))) return;
 
     // Try the most likely submission endpoint pattern.
     const url = `/api/v1/student/course/${poll.course_id}/poll/${poll.id}/respond`;

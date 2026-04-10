@@ -11,6 +11,7 @@
 // ── Step 1: inject immediately (synchronous, before any await) ────────────────
 // Using safe defaults so WebSocket is patched before any page script runs.
 // Actual user settings are forwarded below once storage responds.
+const _utpoll_nonce = crypto.randomUUID();
 {
   const root = document.head || document.documentElement;
   const s = document.createElement('script');
@@ -18,6 +19,7 @@
   s.dataset.pattern    = '/api/v1/student/course/*/poll';
   s.dataset.courseId   = '';
   s.dataset.autosubmit = '0';
+  s.dataset.nonce      = _utpoll_nonce;
   s.onload = () => s.remove();
   root.appendChild(s);
 }
@@ -30,12 +32,14 @@
     enableAutoSubmit: false,
   });
   // inject.js listens for this message to update its live configuration.
+  // Includes the nonce so inject.js can verify this came from our content script.
   window.postMessage({
     type:        'UTPOLL_CONFIG',
+    nonce:       _utpoll_nonce,
     pattern:     apiPattern,
     courseId:    courseId,
     autosubmit:  enableAutoSubmit ? '1' : '0',
-  }, '*');
+  }, window.location.origin);
 })();
 
 // Establish a persistent port so background.js can detect page liveness.

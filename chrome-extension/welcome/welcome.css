@@ -1,0 +1,447 @@
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+html { font-size: 16px; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  background: #0f0f0f;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 48px 24px 64px;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+main {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.icon {
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #f0f0f0;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #bf5700;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────────────── */
+.card {
+  border: 1px solid #242424;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.card h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 20px;
+}
+
+/* ── Steps ─────────────────────────────────────────────────────────────────── */
+.steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.steps li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  border: 1px solid #303030;
+  color: #bf5700;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-body strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-bottom: 3px;
+}
+
+.step-body p {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+}
+
+.step-body a {
+  color: #bf5700;
+  text-decoration: none;
+}
+
+.step-body a:hover {
+  text-decoration: underline;
+}
+
+/* ── Tip ───────────────────────────────────────────────────────────────────── */
+.tip {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  background: #161616;
+  border: 1px solid #242424;
+  border-left: 3px solid #bf5700;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 28px;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.tip-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #bf5700;
+}
+
+.tip strong {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+/* ── Actions ───────────────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn-primary {
+  display: inline-block;
+  background: #bf5700;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 7px;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary:hover {
+  background: #d96100;
+}
+
+.btn-audio {
+  background: transparent;
+  border: 1px solid #2e2e2e;
+  border-radius: 7px;
+  color: #888;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.btn-audio:hover:not(:disabled) {
+  border-color: #444;
+  color: #bbb;
+}
+
+.btn-audio:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Footer hint ───────────────────────────────────────────────────────────── */
+.configure-hint {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+/* ── Card intro (short lead-in paragraph) ──────────────────────────────────── */
+.card-intro {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* ── ntfy why-box ──────────────────────────────────────────────────────────── */
+.ntfy-why {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(191, 87, 0, 0.07);
+  border: 1px solid rgba(191, 87, 0, 0.22);
+  border-radius: 7px;
+  padding: 12px 14px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #bbb;
+  line-height: 1.55;
+}
+.ntfy-why-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.ntfy-why em {
+  font-style: normal;
+  color: #e0b47a;
+  font-weight: 600;
+}
+
+/* ── ntfy-steps: wider gap than plain steps ────────────────────────────────── */
+.ntfy-steps {
+  gap: 28px;
+}
+.ntfy-steps .step-body > p {
+  margin-bottom: 10px;
+}
+.ntfy-steps .step-body > p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Platform download buttons ─────────────────────────────────────────────── */
+.platform-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 10px;
+}
+.platform-btn {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.platform-btn:hover { opacity: 0.82; text-decoration: none; }
+.platform-btn.android {
+  background: #1e2e1e;
+  border: 1px solid #2d4a2d;
+  color: #7acc7a;
+}
+.platform-btn.ios {
+  background: #1e1e2e;
+  border: 1px solid #2d2d4a;
+  color: #7a9acc;
+}
+
+/* ── Step note (small muted text below step content) ──────────────────────── */
+.step-note {
+  font-size: 12px !important;
+  color: #555 !important;
+  margin-top: 8px !important;
+}
+
+/* ── Topic name examples ───────────────────────────────────────────────────── */
+.topic-examples {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+.topic-examples code {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #bf5700;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+/* ── Inline tip (inside a step) ────────────────────────────────────────────── */
+.tip-inline {
+  margin: 10px 0 0 !important;
+}
+
+/* ── Sub-step block (Android / iPhone variants) ────────────────────────────── */
+.substep-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 10px;
+}
+.substep {
+  background: #161616;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #999;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.substep p {
+  font-size: 13px !important;
+  color: #999 !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+.substep p strong {
+  color: #e0e0e0 !important;
+  font-weight: 600;
+  display: inline !important;
+  font-size: 13px !important;
+  margin-bottom: 0 !important;
+}
+.substep-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 1px;
+}
+.android-badge { background: #1e2e1e; border: 1px solid #2d4a2d; color: #7acc7a; }
+.ios-badge     { background: #1e1e2e; border: 1px solid #2d2d4a; color: #7a9acc; }
+
+/* ── Inline ordered list (inside a step) ───────────────────────────────────── */
+.inline-steps {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.inline-steps li {
+  display: list-item;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+  padding: 0;
+  gap: 0;
+}
+.inline-steps li strong {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+/* ── FAQ accordion ─────────────────────────────────────────────────────────── */
+#ntfy-faq {
+  margin-top: 0;
+}
+.faq-item {
+  border-bottom: 1px solid #1e1e1e;
+  padding: 2px 0;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-item summary {
+  padding: 13px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d0d0d0;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+  transition: color 0.15s;
+}
+.faq-item summary:hover { color: #fff; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: '+';
+  font-size: 18px;
+  font-weight: 300;
+  color: #444;
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.15s;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); color: #bf5700; }
+.faq-body {
+  padding: 0 4px 14px;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.7;
+}
+.faq-body p { margin-bottom: 8px; }
+.faq-body p:last-child { margin-bottom: 0; }
+.faq-body ul, .faq-body ol {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+.faq-body li {
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+}
+.faq-body code {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 12px;
+  color: #bf5700;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+.faq-body strong { color: #d0d0d0; font-weight: 600; }
+.faq-body em { font-style: italic; color: #aaa; }
+.faq-body a { color: #bf5700; text-decoration: none; }
+.faq-body a:hover { text-decoration: underline; }
+
+/* ── ntfy card extras ──────────────────────────────────────────────────────── */
+.card-intro {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #bf5700;
+}

@@ -7,16 +7,25 @@ Wants=network-online.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/opt/instapoll
-ExecStart=/opt/instapoll/venv/bin/python main.py
+ExecStart=/opt/instapoll/venv/bin/python -u main.py
 Restart=on-failure
 RestartSec=10
 
 # Load COURSE_ID and NTFY_TOPIC from a file that is NOT in the repo
 EnvironmentFile=/opt/instapoll/.env
 
-# Safety: no unnecessary privileges
+# Safety: minimal privileges
 NoNewPrivileges=true
 PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/instapoll
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
 
 [Install]
 WantedBy=multi-user.target

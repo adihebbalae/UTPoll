@@ -1,29 +1,39 @@
 """
-Instapoll Cloud Poll Notifier
-Connects to the Instapoll Pusher WebSocket and fires an ntfy.sh
-notification the moment a poll_released event arrives.
+Instapoll Cloud Poll Notifier v2
+Connects directly to the Instapoll Pusher WebSocket via websocket-client
+and fires ntfy.sh notifications when poll events arrive.
+
+Replaces pysher with raw Pusher protocol handling for reliable connections
+(pysher 1.0.8 dropped connections every ~60s on custom Pusher hosts).
 
 Required env vars:
-  COURSE_ID   — numeric Instapoll course ID (e.g. 6104)
-  NTFY_TOPIC  — ntfy.sh topic name (use a random UUID for privacy)
+  COURSE_ID     — numeric Instapoll course ID (e.g. 6104)
+  NTFY_TOPIC    — ntfy.sh topic for poll alerts
+
+Optional env vars:
+  NTFY_HB_TOPIC — ntfy.sh topic for heartbeat pings (default: none)
 """
 
+import json
 import os
+import ssl
 import sys
 import time
 import threading
 from urllib.parse import quote
+
 import requests
-import pysher
+import websocket
+
+# ── config ────────────────────────────────────────────────────────────────────
 
 PUSHER_APP_KEY = "instapollprod"
 PUSHER_HOST    = "pusher-ws.la.utexas.edu"
 NTFY_BASE_URL  = "https://ntfy.sh"
 
-# ── env var validation ────────────────────────────────────────────────────────
-
-COURSE_ID  = os.environ.get("COURSE_ID", "").strip()
-NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
+COURSE_ID     = os.environ.get("COURSE_ID", "").strip()
+NTFY_TOPIC    = os.environ.get("NTFY_TOPIC", "").strip()
+NTFY_HB_TOPIC = os.environ.get("NTFY_HB_TOPIC", "").strip()
 
 if not COURSE_ID:
     sys.exit("ERROR: COURSE_ID env var is required (e.g. COURSE_ID=6104)")
@@ -32,10 +42,21 @@ if not NTFY_TOPIC:
 
 CHANNEL_NAME = f"polls_course_{COURSE_ID}"
 
+WS_URL = (
+    f"wss://{PUSHER_HOST}/app/{PUSHER_APP_KEY}"
+    f"?protocol=7&client=python-instapoll&version=2.0"
+)
+
+HEARTBEAT_INTERVAL  = 30 * 60   # 30 minutes — ntfy heartbeat
+PUSHER_PING_INTERVAL = 25       # seconds — keep WebSocket alive
+
 # ── ntfy helpers ──────────────────────────────────────────────────────────────
 
-def send_ntfy(title: str, body: str, priority: str = "default", tags: list[str] | None = None) -> None:
-    url = f"{NTFY_BASE_URL}/{quote(NTFY_TOPIC, safe='')}"
+def send_ntfy(
+    topic: str, title: str, body: str,
+    priority: str = "default", tags: list[str] | None = None,
+) -> None:
+    url = f"{NTFY_BASE_URL}/{quote(topic, safe='')}"
     headers = {
         "Title":    title,
         "Priority": priority,
@@ -44,82 +65,208 @@ def send_ntfy(title: str, body: str, priority: str = "default", tags: list[str] 
     try:
         resp = requests.post(url, data=body.encode("utf-8"), headers=headers, timeout=10)
         resp.raise_for_status()
-        print(f"[ntfy] Sent: {title!r}")
+        print(f"[ntfy] Sent: {title!r} → {topic}")
     except requests.RequestException as exc:
         print(f"[ntfy] ERROR sending notification: {exc}")
 
-# ── Pusher event handlers ─────────────────────────────────────────────────────
-
-def on_poll_released(data: str) -> None:
-    print(f"[event] poll_released received: {data}")
-    send_ntfy(
-        title="Instapoll Alert",
-        body="A poll is open — you have 3 minutes!",
-        priority="high",
-        tags=["bell"],
-    )
-
-def on_poll_finished(data: str) -> None:
-    print(f"[event] poll_finished received: {data}")
-    send_ntfy(
-        title="Instapoll Closed",
-        body="The poll has closed.",
-        priority="low",
-        tags=["white_check_mark"],
-    )
-
-def on_poll_recalled(data: str) -> None:
-    print(f"[event] poll_recalled received: {data}")
-    send_ntfy(
-        title="Instapoll Recalled",
-        body="The poll was recalled before closing.",
-        priority="low",
-        tags=["x"],
-    )
-
-def on_any_event(event_name: str, data: str) -> None:
-    """Log every channel event so you can verify exact event names on first deploy."""
-    print(f"[channel] {event_name}: {data}")
-
-# ── connection / subscription ─────────────────────────────────────────────────
-
-def on_connect(data: str) -> None:
-    print(f"[pusher] Connected — subscribing to {CHANNEL_NAME}")
-    channel = pusher.subscribe(CHANNEL_NAME)
-
-    # Log all events for initial verification (harmless to leave in).
-    channel.bind("pusher:subscription_succeeded", lambda d: print(f"[pusher] Subscribed to {CHANNEL_NAME}"))
-    channel.bind_all(on_any_event)
-
-    channel.bind("poll_released", on_poll_released)
-    channel.bind("poll_finished", on_poll_finished)
-    channel.bind("poll_recalled", on_poll_recalled)
-
-# ── heartbeat thread ──────────────────────────────────────────────────────────
-
-HEARTBEAT_INTERVAL = 10 * 60  # 10 minutes
+# ── ntfy heartbeat thread ────────────────────────────────────────────────────
 
 def heartbeat_loop() -> None:
+    """Send an ntfy heartbeat every HEARTBEAT_INTERVAL seconds."""
     while True:
         time.sleep(HEARTBEAT_INTERVAL)
         print(f"[heartbeat] Worker alive — monitoring {CHANNEL_NAME}")
+        if NTFY_HB_TOPIC:
+            send_ntfy(
+                NTFY_HB_TOPIC,
+                "Instapoll Heartbeat",
+                f"Worker alive — monitoring {CHANNEL_NAME}",
+                priority="min",
+                tags=["heartbeat"],
+            )
+
+# ── Pusher event processing ──────────────────────────────────────────────────
+
+def handle_pusher_message(ws, raw: str) -> None:
+    """Process a single Pusher protocol frame."""
+    try:
+        frame = json.loads(raw)
+    except json.JSONDecodeError:
+        return
+
+    event = frame.get("event", "")
+
+    # ── protocol events ──────────────────────────────────────────────────
+    if event == "pusher:connection_established":
+        data = json.loads(frame.get("data", "{}"))
+        sid = data.get("socket_id", "?")
+        timeout = data.get("activity_timeout", 120)
+        print(f"[pusher] Connected (socket_id={sid}, activity_timeout={timeout}s)")
+        # Subscribe to the course poll channel.
+        ws.send(json.dumps({
+            "event": "pusher:subscribe",
+            "data":  {"channel": CHANNEL_NAME},
+        }))
+        print(f"[pusher] → subscribe {CHANNEL_NAME}")
+        return
+
+    if event in ("pusher_internal:subscription_succeeded", "pusher:subscription_succeeded"):
+        print(f"[pusher] ✓ Subscribed to {frame.get('channel', CHANNEL_NAME)}")
+        return
+
+    if event == "pusher:ping":
+        ws.send(json.dumps({"event": "pusher:pong", "data": {}}))
+        return
+
+    if event == "pusher:pong":
+        return
+
+    if event == "pusher:error":
+        print(f"[pusher] Server error: {frame.get('data', '')}")
+        return
+
+    # ── application events ───────────────────────────────────────────────
+    inner_text = frame.get("data", "")
+    if not inner_text:
+        return
+
+    try:
+        inner = json.loads(inner_text) if isinstance(inner_text, str) else inner_text
+    except json.JSONDecodeError:
+        inner = None
+
+    event_lower = event.lower()
+
+    # Named poll events (primary detection path — mirrors inject.js).
+    if "poll_released" in event_lower or "poll_opened" in event_lower:
+        print(f"[event] {event}: {str(inner_text)[:300]}")
+        send_ntfy(
+            NTFY_TOPIC,
+            "Instapoll Alert 🚨",
+            "A poll is open — you have 3 minutes!",
+            priority="urgent",
+            tags=["rotating_light", "bell"],
+        )
+        return
+
+    if any(kw in event_lower for kw in ("poll_finished", "poll_closed", "poll_ended")):
+        print(f"[event] {event}: {str(inner_text)[:300]}")
+        send_ntfy(
+            NTFY_TOPIC,
+            "Instapoll Closed",
+            "The poll has closed.",
+            priority="low",
+            tags=["white_check_mark"],
+        )
+        return
+
+    if "poll_recalled" in event_lower:
+        print(f"[event] {event}: {str(inner_text)[:300]}")
+        send_ntfy(
+            NTFY_TOPIC,
+            "Instapoll Recalled",
+            "The poll was recalled before closing.",
+            priority="low",
+            tags=["x"],
+        )
+        return
+
+    # Broad payload detection (mirrors inject.js data-shape matching).
+    if inner is not None:
+        polls = None
+        if isinstance(inner, list) and len(inner) > 0:
+            polls = inner
+        elif isinstance(inner, dict):
+            if isinstance(inner.get("polls"), list) and len(inner["polls"]) > 0:
+                polls = inner["polls"]
+            elif inner.get("poll"):
+                polls = [inner["poll"]]
+
+        if polls:
+            filtered = [
+                p for p in polls
+                if not COURSE_ID
+                or str(p.get("course_id", "")) == COURSE_ID
+                or str(p.get("courseId", ""))  == COURSE_ID
+            ]
+            if filtered:
+                print(f"[event] Poll data in {event}: {json.dumps(filtered)[:300]}")
+                send_ntfy(
+                    NTFY_TOPIC,
+                    "Instapoll Alert 🚨",
+                    "A poll is open — you have 3 minutes!",
+                    priority="urgent",
+                    tags=["rotating_light", "bell"],
+                )
+
+# ── WebSocket callbacks ───────────────────────────────────────────────────────
+
+def on_open(ws) -> None:
+    print(f"[pusher] WebSocket opened → {PUSHER_HOST}")
+    # Keep connection alive with Pusher-level pings.
+    def ping_loop():
+        while True:
+            time.sleep(PUSHER_PING_INTERVAL)
+            try:
+                ws.send(json.dumps({"event": "pusher:ping", "data": {}}))
+            except Exception:
+                break
+    threading.Thread(target=ping_loop, daemon=True).start()
+
+def on_error(ws, error) -> None:
+    print(f"[pusher] WebSocket error: {error}")
+
+def on_close(ws, code, msg) -> None:
+    print(f"[pusher] Connection closed (code={code}, msg={msg})")
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
-print(f"[startup] Instapoll Cloud Notifier starting")
-print(f"[startup] Course channel : {CHANNEL_NAME}")
-print(f"[startup] ntfy topic     : {NTFY_TOPIC[:4]}...{NTFY_TOPIC[-4:]}" if len(NTFY_TOPIC) > 8 else "[startup] ntfy topic     : (set)")
+def main() -> None:
+    print("[startup] Instapoll Cloud Notifier v2")
+    print(f"[startup] Course channel  : {CHANNEL_NAME}")
+    masked_alert = NTFY_TOPIC[:4] + "****" if len(NTFY_TOPIC) > 4 else "****"
+    print(f"[startup] Alert topic     : {masked_alert}")
+    if NTFY_HB_TOPIC:
+        masked_hb = NTFY_HB_TOPIC[:4] + "****" if len(NTFY_HB_TOPIC) > 4 else "****"
+        print(f"[startup] Heartbeat topic : {masked_hb} (every {HEARTBEAT_INTERVAL // 60}m)")
 
-pusher = pysher.Pusher(
-    key=PUSHER_APP_KEY,
-    custom_host=PUSHER_HOST,
-    secure=True,
-    reconnect_interval=5,
-)
-pusher.connection.bind("pusher:connection_established", on_connect)
-pusher.connect()
+    # Start ntfy heartbeat thread.
+    threading.Thread(target=heartbeat_loop, daemon=True).start()
 
-threading.Thread(target=heartbeat_loop, daemon=True).start()
+    # Startup notification.
+    if NTFY_HB_TOPIC:
+        send_ntfy(
+            NTFY_HB_TOPIC,
+            "Instapoll Started",
+            f"Worker started — monitoring {CHANNEL_NAME}",
+            priority="low",
+            tags=["rocket"],
+        )
 
-while True:
-    time.sleep(1)
+    # Reconnect loop with exponential backoff.
+    backoff = 5
+    while True:
+        try:
+            ws = websocket.WebSocketApp(
+                WS_URL,
+                on_open=on_open,
+                on_message=handle_pusher_message,
+                on_error=on_error,
+                on_close=on_close,
+            )
+            ws.run_forever(
+                sslopt={"cert_reqs": ssl.CERT_REQUIRED},
+                ping_interval=0,       # ping at Pusher protocol level, not WebSocket
+                reconnect=0,           # we handle reconnect ourselves
+            )
+            backoff = 5  # Reset on clean disconnect (was connected successfully).
+        except Exception as exc:
+            print(f"[error] WebSocket crashed: {exc}")
+
+        print(f"[pusher] Reconnecting in {backoff}s...")
+        time.sleep(backoff)
+        backoff = min(backoff * 2, 300)  # Cap at 5 minutes.
+
+
+if __name__ == "__main__":
+    main()
