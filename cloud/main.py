@@ -16,6 +16,7 @@ Optional env vars:
 
 import json
 import os
+import re
 import ssl
 import sys
 import time
@@ -136,10 +137,13 @@ def handle_pusher_message(ws, raw: str) -> None:
         inner = None
 
     event_lower = event.lower()
+    # Normalize event name: strip non-alphanumeric so we match
+    # poll_released / pollreleased / App\Events\PollReleased etc.
+    event_norm = re.sub(r'[^a-z0-9]', '', event_lower)
 
     # Named poll events (primary detection path — mirrors inject.js).
-    if "poll_released" in event_lower or "poll_opened" in event_lower:
-        print(f"[event] {event}: {str(inner_text)[:300]}")
+    if "pollrelease" in event_norm or "pollopened" in event_norm or "pollopen" in event_norm:
+        print(f"[event] OPEN  {event}: {str(inner_text)[:300]}")
         send_ntfy(
             NTFY_TOPIC,
             "Instapoll Alert 🚨",
@@ -149,8 +153,8 @@ def handle_pusher_message(ws, raw: str) -> None:
         )
         return
 
-    if any(kw in event_lower for kw in ("poll_finished", "poll_closed", "poll_ended")):
-        print(f"[event] {event}: {str(inner_text)[:300]}")
+    if any(kw in event_norm for kw in ("pollfinish", "pollclos", "pollended", "pollend")):
+        print(f"[event] CLOSE {event}: {str(inner_text)[:300]}")
         send_ntfy(
             NTFY_TOPIC,
             "Instapoll Closed",
@@ -160,8 +164,8 @@ def handle_pusher_message(ws, raw: str) -> None:
         )
         return
 
-    if "poll_recalled" in event_lower:
-        print(f"[event] {event}: {str(inner_text)[:300]}")
+    if "pollrecall" in event_norm:
+        print(f"[event] RECALL {event}: {str(inner_text)[:300]}")
         send_ntfy(
             NTFY_TOPIC,
             "Instapoll Recalled",
@@ -171,7 +175,9 @@ def handle_pusher_message(ws, raw: str) -> None:
         )
         return
 
-    # Broad payload detection (mirrors inject.js data-shape matching).
+    # Broad payload detection — fallback for unknown event names.
+    # We are already subscribed to the course-specific channel so every event
+    # on this channel belongs to our course. No course_id filter needed.
     if inner is not None:
         polls = None
         if isinstance(inner, list) and len(inner) > 0:
@@ -183,21 +189,17 @@ def handle_pusher_message(ws, raw: str) -> None:
                 polls = [inner["poll"]]
 
         if polls:
-            filtered = [
-                p for p in polls
-                if not COURSE_ID
-                or str(p.get("course_id", "")) == COURSE_ID
-                or str(p.get("courseId", ""))  == COURSE_ID
-            ]
-            if filtered:
-                print(f"[event] Poll data in {event}: {json.dumps(filtered)[:300]}")
-                send_ntfy(
-                    NTFY_TOPIC,
-                    "Instapoll Alert 🚨",
-                    "A poll is open — you have 3 minutes!",
-                    priority="urgent",
-                    tags=["rotating_light", "bell"],
-                )
+            print(f"[event] POLL-DATA {event}: {json.dumps(polls)[:300]}")
+            send_ntfy(
+                NTFY_TOPIC,
+                "Instapoll Alert 🚨",
+                "A poll is open — you have 3 minutes!",
+                priority="urgent",
+                tags=["rotating_light", "bell"],
+            )
+        else:
+            # Log unknown events so we can learn the real event names.
+            print(f"[event] UNKNOWN {event}: {str(inner_text)[:200]}")
 
 # ── WebSocket callbacks ───────────────────────────────────────────────────────
 
