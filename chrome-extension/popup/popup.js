@@ -14,7 +14,11 @@ const enablePush       = $('enablePush');
 const enableAutoSubmit = $('enableAutoSubmit');
 const ntfySection      = $('ntfySection');
 const ntfyTopicEl  = $('ntfyTopic');
-const armBtn       = $('armAudioBtn');
+const armBtn          = $('armAudioBtn');
+const audioActions    = $('audioActions');
+const advancedToggle  = $('advancedToggle');
+const advancedSection = $('advancedSection');
+const statusSub       = $('statusSub');
 
 // ── Load persisted settings ───────────────────────────────────────────────────
 // Tracks the last topic value that was actually saved, to detect real changes.
@@ -40,6 +44,7 @@ chrome.storage.sync.get(
     ntfyTopicEl.value  = s.ntfyTopic;
     savedTopic = s.ntfyTopic;
     ntfySection.classList.toggle('hidden', !s.enablePush);
+    audioActions.classList.toggle('hidden', !s.enableAudio);
   }
 );
 
@@ -47,7 +52,7 @@ chrome.storage.sync.get(
 chrome.storage.local.get({ status: 'inactive', audioArmed: false }, ({ status, audioArmed }) => {
   renderStatus(status);
   if (audioArmed) {
-    armBtn.textContent = '✅ Audio armed';
+    armBtn.textContent = '✅ Sound allowed';
     armBtn.disabled    = true;
   }
 });
@@ -59,22 +64,33 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 const STATUS_MAP = {
-  inactive:      { dot: 'gray',  text: 'Not on Instapoll page' },
-  monitoring:    { dot: 'green', text: 'Monitoring…' },
-  poll_detected:    { dot: 'red',   text: 'Poll detected!' },
-  autosubmit_ok:    { dot: 'green', text: 'Attendance submitted ✅' },
-  autosubmit_fail:  { dot: 'red',   text: 'Auto-submit failed — submit manually!' },
+  inactive:        { dot: 'gray',  text: 'Not monitoring',     sub: 'Open Instapoll in Canvas to begin.' },
+  monitoring:      { dot: 'green', text: 'Monitoring…',        sub: "You'll be alerted the moment a poll opens." },
+  poll_detected:   { dot: 'red',   text: 'Poll detected!',     sub: 'Check Instapoll now — alerts are firing!' },
+  autosubmit_ok:   { dot: 'green', text: 'Poll submitted!',    sub: 'Full credit recorded automatically.' },
+  autosubmit_fail: { dot: 'red',   text: 'Auto-submit failed', sub: 'Please submit manually on the Instapoll page.' },
 };
 
 function renderStatus(status) {
-  const { dot, text } = STATUS_MAP[status] || STATUS_MAP.inactive;
-  statusDot.className  = 'dot ' + dot;
+  const { dot, text, sub } = STATUS_MAP[status] || STATUS_MAP.inactive;
+  statusDot.className    = 'dot ' + dot;
   statusText.textContent = text;
+  statusSub.textContent  = sub || '';
 }
 
-// ── Show / hide ntfy topic input ──────────────────────────────────────────────
+// ── Show / hide ntfy section, audio actions, and advanced panel ──────────────
 enablePush.addEventListener('change', () => {
   ntfySection.classList.toggle('hidden', !enablePush.checked);
+});
+
+enableAudio.addEventListener('change', () => {
+  audioActions.classList.toggle('hidden', !enableAudio.checked);
+});
+
+advancedToggle.addEventListener('click', () => {
+  const isOpen = !advancedSection.classList.contains('hidden');
+  advancedSection.classList.toggle('hidden', isOpen);
+  advancedToggle.textContent = isOpen ? '⚙ Advanced settings' : '⚙ Hide advanced settings';
 });
 
 // ── Save settings ─────────────────────────────────────────────────────────────
@@ -206,7 +222,7 @@ armBtn.addEventListener('click', () => {
   osc.stop(ctx.currentTime + 0.1);
   setTimeout(() => ctx.close(), 300);
 
-  armBtn.textContent = '✅ Audio armed';
+  armBtn.textContent = '✅ Sound allowed';
   armBtn.disabled    = true;
   chrome.storage.local.set({ audioArmed: true });
 });

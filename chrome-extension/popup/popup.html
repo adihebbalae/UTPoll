@@ -13,70 +13,89 @@
     <h1>UT Instapoll Alert</h1>
   </header>
 
-  <section class="status-row">
+  <section class="status-hero">
     <span id="statusDot" class="dot gray"></span>
-    <span id="statusText">Checking…</span>
+    <div class="status-body">
+      <span id="statusText" class="status-label">Checking…</span>
+      <span id="statusSub" class="status-sub"></span>
+    </div>
   </section>
 
   <hr>
 
   <form id="settingsForm" autocomplete="off">
 
-    <label class="field">
-      <span class="field-label">Course ID <em>(optional — filters to one course)</em></span>
-      <input type="text" id="courseId" placeholder="e.g. 12345">
-    </label>
-
-    <label class="field">
-      <span class="field-label">API URL pattern</span>
-      <input type="text" id="apiPattern" placeholder="/api/v1/student/course/*/poll">
-    </label>
+    <p class="section-label">Alert me with</p>
 
     <div class="toggle-group">
       <label class="toggle">
-        <span>Desktop notification</span>
+        <div class="toggle-info">
+          <span class="toggle-name">Desktop popup</span>
+        </div>
         <input type="checkbox" id="enableNotification">
         <span class="slider"></span>
       </label>
       <label class="toggle">
-        <span>Audio alert</span>
+        <div class="toggle-info">
+          <span class="toggle-name">Sound alert</span>
+        </div>
         <input type="checkbox" id="enableAudio">
         <span class="slider"></span>
       </label>
       <label class="toggle">
-        <span>Push via ntfy.sh</span>
+        <div class="toggle-info">
+          <span class="toggle-name">Phone notification</span>
+          <span class="toggle-sub">Free ntfy app &middot; no account needed</span>
+        </div>
         <input type="checkbox" id="enablePush">
         <span class="slider"></span>
       </label>
     </div>
 
-    <div class="experimental-section">
-      <p class="experimental-label">⚠️ Experimental</p>
-      <label class="toggle">
-        <span>Auto-submit attendance polls</span>
-        <input type="checkbox" id="enableAutoSubmit">
-        <span class="slider"></span>
-      </label>
-      <p class="hint">Automatically submits <em>attendance</em> and <em>text entry</em> (participation-graded) polls the moment they go live. Does not answer graded multiple choice polls.</p>
-    </div>
-
     <div id="ntfySection" class="ntfy-section hidden">
       <label class="field">
-        <span class="field-label">ntfy.sh topic name</span>
-        <input type="text" id="ntfyTopic" placeholder="my-unique-private-topic">
+        <span class="field-label">Your private ntfy topic name</span>
+        <input type="text" id="ntfyTopic" placeholder="e.g. my-secret-alert-123">
       </label>
       <p class="hint">
-        Install the <strong>ntfy</strong> app on your phone, subscribe to this topic,
-        and you'll receive an instant push alert when a poll goes live.
+        1. Install <strong>ntfy</strong> on your phone &nbsp;&middot;&nbsp;
+        2. Subscribe to this topic &nbsp;&middot;&nbsp;
+        3. Test below.
       </p>
-      <button type="button" id="testPushBtn" class="btn-secondary btn-full">📲 Send Test Push</button>
+      <button type="button" id="testPushBtn" class="btn-secondary btn-full">📲 Send test notification</button>
       <p id="testPushStatus" class="push-status"></p>
     </div>
 
+    <div id="audioActions" class="audio-actions hidden">
+      <button type="button" id="armAudioBtn" class="btn-secondary">🔔 Allow sound</button>
+      <button type="button" id="testChimeBtn" class="btn-secondary">▶ Test sound</button>
+    </div>
+
+    <div class="experimental-section">
+      <label class="toggle">
+        <div class="toggle-info">
+          <span class="toggle-name">⚡ Auto-submit easy polls</span>
+          <span class="toggle-sub">Instant full credit on attendance &amp; participation polls. Never touches graded questions.</span>
+        </div>
+        <input type="checkbox" id="enableAutoSubmit">
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <div class="action-row">
-      <button type="button" id="armAudioBtn" class="btn-secondary">🔔 Arm Audio</button>
-      <button type="button" id="testChimeBtn" class="btn-secondary">&#9654; Test chime</button>
-      <button type="submit" class="btn-primary">Save</button>
+      <button type="submit" class="btn-primary">Save settings</button>
+    </div>
+
+    <button type="button" id="advancedToggle" class="btn-link">⚙ Advanced settings</button>
+    <div id="advancedSection" class="advanced-section hidden">
+      <label class="field">
+        <span class="field-label">Course ID <em>(leave blank — monitors all your courses)</em></span>
+        <input type="text" id="courseId" placeholder="e.g. 12345">
+      </label>
+      <label class="field">
+        <span class="field-label">API URL pattern</span>
+        <input type="text" id="apiPattern" placeholder="/api/v1/student/course/*/poll">
+      </label>
     </div>
 
   </form>
