@@ -48,6 +48,9 @@ chrome.runtime.onConnect.addListener((port) => {
       debounceCount = 0;
       if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
       setStatus('inactive');
+      // Stop any playing chime and release the offscreen document.
+      chrome.runtime.sendMessage({ action: 'stopAudio' }).catch(() => {});
+      chrome.offscreen.closeDocument().catch(() => {});
     }
   });
 });
@@ -102,7 +105,8 @@ function handlePollDetected(polls) {
   }
 }
 
-function handlePollCleared() {  if (alertState === 'ALERTED') {
+function handlePollCleared() {
+  if (alertState === 'ALERTED') {
     alertState = 'IDLE';
     setStatus('monitoring');
     // Stop the repeating chime.
@@ -121,6 +125,10 @@ function handleAutoSubmitResult({ ok, status, error }) {
   } else {
     console.warn('[UTPoll] Auto-submit failed:', status, error);
     setStatus('autosubmit_fail');
+    // Revert indicator after a few seconds so the user isn't stuck on red.
+    setTimeout(() => {
+      setStatus(alertState === 'ALERTED' ? 'poll_detected' : 'monitoring');
+    }, 6000);
   }
 }
 

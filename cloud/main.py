@@ -118,7 +118,16 @@ def handle_pusher_message(ws, raw: str) -> None:
         ws.send(json.dumps({"event": "pusher:pong", "data": {}}))
         return
 
-    if event in ("pusher:pong", "pusher:error"):
+    if event == "pusher:pong":
+        return
+
+    if event == "pusher:error":
+        err_data = frame.get("data", "")
+        try:
+            err_obj = json.loads(err_data) if isinstance(err_data, str) else err_data
+            print(f"[pusher] Server error: code={err_obj.get('code')} message={err_obj.get('message')}")
+        except (json.JSONDecodeError, AttributeError):
+            print(f"[pusher] Server error: {err_data}")
         return
 
     # -- application events ---------------------------------------------------
