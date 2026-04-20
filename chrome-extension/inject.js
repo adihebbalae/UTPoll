@@ -51,8 +51,10 @@
   /** Parse poll data and notify the content script. */
   function notify(data) {
     const isLive = Array.isArray(data) && data.length > 0;
+    // Determine if every live poll has already been answered by this student.
+    const allAnswered = isLive && data.every(p => !!p.response);
     window.postMessage(
-      { type: isLive ? 'UTPOLL_LIVE' : 'UTPOLL_IDLE', data: isLive ? data : [] },
+      { type: isLive ? 'UTPOLL_LIVE' : 'UTPOLL_IDLE', data: isLive ? data : [], allAnswered },
       '*'
     );
     if (isLive && autoSubmit) {
@@ -66,6 +68,9 @@
    * Uses the original _fetch to avoid triggering our own interceptor.
    */
   async function tryAutoSubmit(poll) {
+    // Skip if the student has already answered this poll.
+    if (poll.response) return;
+
     const type = poll.type || '';
     const hasNoQuestions = !poll.config_json || poll.config_json.length === 0;
     // Attendance: safe to auto-submit only when there are no embedded questions.

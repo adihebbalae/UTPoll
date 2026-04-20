@@ -62,7 +62,7 @@ chrome.runtime.onConnect.addListener((port) => {
 // ── Message handling ──────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.action) {
-    case 'pollDetected':     handlePollDetected(message.polls); return false;
+    case 'pollDetected':     handlePollDetected(message.polls, message.allAnswered); return false;
     case 'pollCleared':      handlePollCleared();               return false;
     case 'autoSubmitResult': handleAutoSubmitResult(message);   return false;
     case 'sendNtfyPush': {
@@ -88,8 +88,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 // ── Debounce logic ────────────────────────────────────────────────────────────
-function handlePollDetected(polls) {
+function handlePollDetected(polls, allAnswered) {
   if (alertState === 'ALERTED') return; // Already alerted; ignore duplicates.
+
+  // If the student has already answered all live polls, update status quietly
+  // but don't fire the full alert (sound, notification, push).
+  if (allAnswered) {
+    setStatus('autosubmit_ok'); // Reuse the green indicator — poll is open, already answered.
+    return;
+  }
 
   debounceCount++;
 
@@ -139,14 +146,18 @@ function handleAutoSubmitResult({ ok, status, error }) {
 // ── Alert helpers ────────────────────────────────────────────────────────────
 function buildNotificationMessage(polls) {
   if (polls && polls.length > 1) {
+    const unanswered = polls.filter(p => !p.response);
+    if (unanswered.length === 0) return `${polls.length} polls are open — you’ve answered all of them!`;
     return `${polls.length} polls are open at once — open Instapoll now!`;
   }
-  const type = polls?.[0]?.type || '';
+  const poll = polls?.[0];
+  const type = poll?.type || '';
+  if (poll?.response) return 'Poll is open — you’ve already submitted!';
   switch (type) {
-    case 'attendance':      return 'Attendance check — open Instapoll and submit!';
-    case 'text_entry':     return 'Text entry poll — any answer earns full credit!';
+    case 'attendance':       return 'Attendance check — open Instapoll and submit!';
+    case 'text_entry':      return 'Text entry poll — any answer earns full credit!';
     case 'multiple_choice': return 'Multiple choice poll is open — answer quickly!';
-    default:               return 'A live poll is available! Open Instapoll now.';
+    default:                return 'A live poll is available! Open Instapoll now.';
   }
 }
 

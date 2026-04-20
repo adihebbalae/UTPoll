@@ -80,6 +80,7 @@ window.addEventListener('message', (event) => {
   chrome.runtime.sendMessage({
     action: type === 'UTPOLL_LIVE' ? 'pollDetected' : 'pollCleared',
     polls: data,
+    allAnswered: event.data.allAnswered || false,
   }).catch(() => {
     // Extension context may be invalidated after an update — ignore.
   });
