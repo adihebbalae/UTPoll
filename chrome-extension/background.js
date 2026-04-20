@@ -59,17 +59,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     case 'pollCleared':      handlePollCleared();               return false;
     case 'autoSubmitResult': handleAutoSubmitResult(message);   return false;
     case 'sendNtfyPush': {
-      // Proxied on behalf of the popup so the fetch comes from the service worker,
-      // which is not subject to extension-page CSP restrictions.
+      // Proxied on behalf of the popup. Uses JSON body so emoji in title is safe.
       const { topic, title, body, priority = 'default', tags = '' } = message;
-      fetch('https://ntfy.sh/' + encodeURIComponent(topic), {
+      fetch('https://ntfy.sh/', {
         method:  'POST',
-        headers: Object.fromEntries([
-          ['Title',    title],
-          ['Priority', priority],
-          ...(tags ? [['Tags', tags]] : []),
-        ]),
-        body,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          title,
+          message: body,
+          priority: priority === 'urgent' ? 5 : priority === 'high' ? 4 : priority === 'low' ? 2 : 3,
+          ...(tags ? { tags: tags.split(',').map(t => t.trim()).filter(Boolean) } : {}),
+        }),
       })
         .then((res) => sendResponse({ ok: res.ok, status: res.status }))
         .catch((err) => sendResponse({ ok: false, error: err.message }));
@@ -185,11 +186,8 @@ async function playAlertAudio() {
   }
 
   chrome.runtime.sendMessage({ action: 'playAudio' });
-
-  // Close offscreen document after the chime finishes (~1.5 s of audio + buffer).
-  setTimeout(() => {
-    chrome.offscreen.closeDocument().catch(() => {});
-  }, 2500);
+  // The offscreen document stays alive and loops every 4 s (see offscreen.js).
+  // It is closed by handlePollCleared() when the poll ends.
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
