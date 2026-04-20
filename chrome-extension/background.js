@@ -159,11 +159,19 @@ function buildNotificationMessage(polls) {
   const poll = polls?.[0];
   const type = poll?.type || '';
   if (poll?.response) return 'Poll is open — you’ve already submitted!';
+
+  // Append time limit if present and short enough to matter.
+  let timeSuffix = '';
+  if (poll?.runtime_seconds) {
+    const s = poll.runtime_seconds;
+    timeSuffix = s < 60 ? ` · ${s}s` : ` · ${Math.round(s / 60)}m`;
+  }
+
   switch (type) {
-    case 'attendance':       return 'Attendance check — open Instapoll and submit!';
-    case 'text_entry':      return 'Text entry poll — any answer earns full credit!';
-    case 'multiple_choice': return 'Multiple choice poll is open — answer quickly!';
-    default:                return 'A live poll is available! Open Instapoll now.';
+    case 'attendance':       return `Attendance check — open Instapoll and submit!${timeSuffix}`;
+    case 'text_entry':      return `Text entry poll — any answer earns full credit!${timeSuffix}`;
+    case 'multiple_choice': return `Multiple choice poll is open — answer quickly!${timeSuffix}`;
+    default:                return `A live poll is available! Open Instapoll now.${timeSuffix}`;
   }
 }
 
@@ -175,9 +183,11 @@ async function triggerAlerts(polls) {
   chrome.action.setBadgeText({ text: 'LIVE' });
   chrome.action.setBadgeBackgroundColor({ color: '#BF0000' });
 
-  // Store finish timestamp so the popup can render a live countdown.
-  const finishTs = polls?.[0]?.finish_timestamp ?? null;
-  chrome.storage.local.set({ pollFinishTs: finishTs });
+  // Store finish timestamp AND response count so the popup can render a live countdown.
+  const poll0     = polls?.[0];
+  const finishTs  = poll0?.finish_timestamp ?? null;
+  const numResp   = poll0?.num_responses   ?? null;
+  chrome.storage.local.set({ pollFinishTs: finishTs, pollNumResponses: numResp });
 
   // Log this poll to the local history (last 10 entries).
   appendPollHistory(polls?.[0]);

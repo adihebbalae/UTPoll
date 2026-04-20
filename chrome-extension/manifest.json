@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UT Instapoll Alert",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Monitors UT Instapoll and fires audio, desktop, and push alerts the moment a live poll is detected.",
 
   "permissions": ["notifications", "storage", "offscreen", "tabs"],

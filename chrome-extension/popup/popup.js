@@ -79,8 +79,8 @@ function renderStatus(status) {
   statusSub.textContent  = sub || '';
 
   if (status === 'poll_detected') {
-    chrome.storage.local.get({ pollFinishTs: null }, ({ pollFinishTs }) => {
-      startCountdown(pollFinishTs);
+    chrome.storage.local.get({ pollFinishTs: null, pollNumResponses: null }, ({ pollFinishTs, pollNumResponses }) => {
+      startCountdown(pollFinishTs, pollNumResponses);
     });
   } else {
     stopCountdown();
@@ -91,7 +91,7 @@ function renderStatus(status) {
 let countdownInterval = null;
 const countdownEl = $('countdown');
 
-function startCountdown(finishTs) {
+function startCountdown(finishTs, numResponses) {
   stopCountdown();
   if (!finishTs) { countdownEl.classList.add('hidden'); return; }
 
@@ -104,7 +104,8 @@ function startCountdown(finishTs) {
     }
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    countdownEl.textContent = `${m}:${String(s).padStart(2, '0')} remaining`;
+    const respStr = numResponses != null ? `${numResponses} answered · ` : '';
+    countdownEl.textContent = `${respStr}${m}:${String(s).padStart(2, '0')} left`;
     countdownEl.classList.remove('hidden');
   }
 
@@ -303,11 +304,12 @@ function renderHistory(pollHistory) {
 }
 
 // Load history and current poll status on open.
-chrome.storage.local.get({ pollHistory: [], status: 'inactive', pollFinishTs: null },
-  ({ pollHistory, status, pollFinishTs }) => {
+chrome.storage.local.get(
+  { pollHistory: [], status: 'inactive', pollFinishTs: null, pollNumResponses: null },
+  ({ pollHistory, status, pollFinishTs, pollNumResponses }) => {
     renderHistory(pollHistory);
     renderStatus(status);
-    if (status === 'poll_detected' && pollFinishTs) startCountdown(pollFinishTs);
+    if (status === 'poll_detected' && pollFinishTs) startCountdown(pollFinishTs, pollNumResponses);
   }
 );
 
