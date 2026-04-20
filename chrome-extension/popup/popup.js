@@ -49,8 +49,8 @@ chrome.storage.sync.get(
 );
 
 // ── Load current status + arm state ──────────────────────────────────────────────
-chrome.storage.local.get({ status: 'inactive', audioArmed: false }, ({ status, audioArmed }) => {
-  renderStatus(status);
+// Status/history/countdown are loaded together at the bottom of the file.
+chrome.storage.local.get({ audioArmed: false }, ({ audioArmed }) => {
   if (audioArmed) {
     armBtn.textContent = '✅ Sound allowed';
     armBtn.disabled    = true;
@@ -58,8 +58,9 @@ chrome.storage.local.get({ status: 'inactive', audioArmed: false }, ({ status, a
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.status) {
-    renderStatus(changes.status.newValue);
+  if (area === 'local') {
+    if (changes.status)      renderStatus(changes.status.newValue);
+    if (changes.pollHistory) renderHistory(changes.pollHistory.newValue || []);
   }
 });
 
@@ -76,9 +77,47 @@ function renderStatus(status) {
   statusDot.className    = 'dot ' + dot;
   statusText.textContent = text;
   statusSub.textContent  = sub || '';
+
+  if (status === 'poll_detected') {
+    chrome.storage.local.get({ pollFinishTs: null }, ({ pollFinishTs }) => {
+      startCountdown(pollFinishTs);
+    });
+  } else {
+    stopCountdown();
+  }
 }
 
-// ── Show / hide ntfy section, audio actions, and advanced panel ──────────────
+// ── Countdown ─────────────────────────────────────────────────────────
+let countdownInterval = null;
+const countdownEl = $('countdown');
+
+function startCountdown(finishTs) {
+  stopCountdown();
+  if (!finishTs) { countdownEl.classList.add('hidden'); return; }
+
+  function tick() {
+    const remaining = Math.ceil(finishTs - Date.now() / 1000);
+    if (remaining <= 0) {
+      countdownEl.textContent = 'Closing…';
+      stopCountdown();
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    countdownEl.textContent = `${m}:${String(s).padStart(2, '0')} remaining`;
+    countdownEl.classList.remove('hidden');
+  }
+
+  tick();
+  countdownInterval = setInterval(tick, 1000);
+}
+
+function stopCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  countdownEl.classList.add('hidden');
+}
+
+// ── Show / hide ntfy section, audio actions, and advanced panel ─────────────────
 enablePush.addEventListener('change', () => {
   ntfySection.classList.toggle('hidden', !enablePush.checked);
 });
@@ -225,4 +264,56 @@ armBtn.addEventListener('click', () => {
   armBtn.textContent = '✅ Sound allowed';
   armBtn.disabled    = true;
   chrome.storage.local.set({ audioArmed: true });
+});
+
+// ── Poll history ──────────────────────────────────────────────────────────────
+const TYPE_ICON = {
+  attendance:      '📋',
+  multiple_choice: '🔘',
+  text_entry:      '✏️',
+};
+
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60)    return `${diff}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function renderHistory(pollHistory) {
+  const section = $('historySection');
+  const list    = $('historyList');
+  if (!pollHistory || pollHistory.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+  section.classList.remove('hidden');
+  list.innerHTML = pollHistory.map(entry => {
+    const icon = TYPE_ICON[entry.type] || '📊';
+    const when = timeAgo(new Date(entry.detectedAt));
+    // Sanitize name to prevent XSS from stored data.
+    const safeName = entry.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<div class="history-entry">
+      <span class="history-icon">${icon}</span>
+      <span class="history-name">${safeName}</span>
+      <span class="history-when">${when}</span>
+    </div>`;
+  }).join('');
+}
+
+// Load history and current poll status on open.
+chrome.storage.local.get({ pollHistory: [], status: 'inactive', pollFinishTs: null },
+  ({ pollHistory, status, pollFinishTs }) => {
+    renderHistory(pollHistory);
+    renderStatus(status);
+    if (status === 'poll_detected' && pollFinishTs) startCountdown(pollFinishTs);
+  }
+);
+
+$('historyToggle').addEventListener('click', () => {
+  const list   = $('historyList');
+  const isOpen = !list.classList.contains('hidden');
+  list.classList.toggle('hidden', isOpen);
+  $('historyToggle').textContent = isOpen ? '🕐 Recent polls' : '🕐 Hide recent polls';
 });

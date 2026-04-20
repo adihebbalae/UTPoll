@@ -26,6 +26,7 @@ let alertState    = 'IDLE';   // 'IDLE' | 'ALERTED'
 let debounceCount = 0;
 let debounceTimer = null;
 let activeTabId   = null;     // Tab ID of the most recently connected Instapoll tab.
+let reAlertTimer  = null;     // setTimeout handle for the 30-second re-alert.
 
 const DEBOUNCE_THRESHOLD = 2;
 const DEBOUNCE_WINDOW_MS = 5000;
@@ -123,6 +124,11 @@ function handlePollCleared() {
     // Stop the repeating chime.
     chrome.runtime.sendMessage({ action: 'stopAudio' }).catch(() => {});
     chrome.offscreen.closeDocument().catch(() => {});
+    // Clear badge and countdown timestamp.
+    chrome.action.setBadgeText({ text: '' });
+    chrome.storage.local.remove('pollFinishTs');
+    // Cancel any pending re-alert.
+    if (reAlertTimer) { clearTimeout(reAlertTimer); reAlertTimer = null; }
   }
 }
 
@@ -164,6 +170,25 @@ function buildNotificationMessage(polls) {
 // ── Alert dispatch ────────────────────────────────────────────────────────────
 async function triggerAlerts(polls) {
   setStatus('poll_detected');
+
+  // Badge — visible on the extension icon even when the popup is closed.
+  chrome.action.setBadgeText({ text: 'LIVE' });
+  chrome.action.setBadgeBackgroundColor({ color: '#BF0000' });
+
+  // Store finish timestamp so the popup can render a live countdown.
+  const finishTs = polls?.[0]?.finish_timestamp ?? null;
+  chrome.storage.local.set({ pollFinishTs: finishTs });
+
+  // Log this poll to the local history (last 10 entries).
+  appendPollHistory(polls?.[0]);
+
+  // Re-alert: if the poll is still active after 30 s, play the chime once more.
+  // Uses setTimeout — best-effort (service worker may be killed first in rare cases).
+  if (reAlertTimer) clearTimeout(reAlertTimer);
+  reAlertTimer = setTimeout(() => {
+    reAlertTimer = null;
+    if (alertState === 'ALERTED') playAlertAudio().catch(console.error);
+  }, 30000);
 
   // Auto-focus the Instapoll tab so it's ready to answer (feature: tab auto-focus).
   if (activeTabId !== null) {
@@ -235,4 +260,20 @@ async function playAlertAudio() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function setStatus(status) {
   chrome.storage.local.set({ status });
+}
+
+/** Prepend a poll entry to the persisted history (max 10). */
+async function appendPollHistory(poll) {
+  if (!poll) return;
+  const { pollHistory = [] } = await chrome.storage.local.get({ pollHistory: [] });
+  const entry = {
+    id:         poll.id,
+    name:       poll.name || 'Poll',
+    type:       poll.type || 'unknown',
+    courseId:   poll.course_id,
+    detectedAt: new Date().toISOString(),
+  };
+  // Avoid duplicate if the same poll is re-detected (page refresh while active).
+  const deduped = pollHistory.filter(e => e.id !== poll.id);
+  chrome.storage.local.set({ pollHistory: [entry, ...deduped].slice(0, 10) });
 }

@@ -18,6 +18,7 @@
     <div class="status-body">
       <span id="statusText" class="status-label">Checking…</span>
       <span id="statusSub" class="status-sub"></span>
+      <span id="countdown" class="countdown hidden"></span>
     </div>
   </section>
 
@@ -99,6 +100,16 @@
     </div>
 
   </form>
+
+  <section class="history-section" id="historySection">
+    <button type="button" id="historyToggle" class="btn-link">&#128336; Recent polls</button>
+    <div id="historyList" class="history-list hidden"></div>
+  </section>
+
+  <div class="popup-tip">
+    <span class="popup-tip-label">Tip</span>
+    <p>Keep the Instapoll tab open and <strong>visible</strong> during long classes. Chrome pauses background tabs after extended inactivity, which can drop the connection — a quick refresh restores it.</p>
+  </div>
 
   <script src="popup.js"></script>
 </body>
