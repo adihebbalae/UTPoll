@@ -25,6 +25,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 let alertState    = 'IDLE';   // 'IDLE' | 'ALERTED'
 let debounceCount = 0;
 let debounceTimer = null;
+let activeTabId   = null;     // Tab ID of the most recently connected Instapoll tab.
 
 const DEBOUNCE_THRESHOLD = 2;
 const DEBOUNCE_WINDOW_MS = 5000;
@@ -36,6 +37,8 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'instapoll_page') return;
 
   activePorts.add(port);
+  // Track the most recently active Instapoll tab for auto-focus on poll detection.
+  if (port.sender?.tab?.id) activeTabId = port.sender.tab.id;
   setStatus('monitoring');
   // Reset the arm-audio flag so the button re-arms on next page load.
   chrome.storage.local.set({ audioArmed: false });
@@ -48,6 +51,7 @@ chrome.runtime.onConnect.addListener((port) => {
       debounceCount = 0;
       if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
       setStatus('inactive');
+      activeTabId = null;
       // Stop any playing chime and release the offscreen document.
       chrome.runtime.sendMessage({ action: 'stopAudio' }).catch(() => {});
       chrome.offscreen.closeDocument().catch(() => {});
@@ -132,9 +136,28 @@ function handleAutoSubmitResult({ ok, status, error }) {
   }
 }
 
+// ── Alert helpers ────────────────────────────────────────────────────────────
+function buildNotificationMessage(polls) {
+  if (polls && polls.length > 1) {
+    return `${polls.length} polls are open at once — open Instapoll now!`;
+  }
+  const type = polls?.[0]?.type || '';
+  switch (type) {
+    case 'attendance':      return 'Attendance check — open Instapoll and submit!';
+    case 'text_entry':     return 'Text entry poll — any answer earns full credit!';
+    case 'multiple_choice': return 'Multiple choice poll is open — answer quickly!';
+    default:               return 'A live poll is available! Open Instapoll now.';
+  }
+}
+
 // ── Alert dispatch ────────────────────────────────────────────────────────────
 async function triggerAlerts(polls) {
   setStatus('poll_detected');
+
+  // Auto-focus the Instapoll tab so it's ready to answer (feature: tab auto-focus).
+  if (activeTabId !== null) {
+    chrome.tabs.update(activeTabId, { active: true }).catch(() => {});
+  }
 
   const settings = await chrome.storage.sync.get({
     enableNotification: true,
@@ -148,7 +171,7 @@ async function triggerAlerts(polls) {
       type:             'basic',
       iconUrl:          chrome.runtime.getURL('assets/icon-128.png'),
       title:            'UT Instapoll Alert',
-      message:          'A live poll is available! Open Instapoll now.',
+      message:          buildNotificationMessage(polls),
       requireInteraction: true,
       priority:         2,
     });

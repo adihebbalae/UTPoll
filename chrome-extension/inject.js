@@ -66,9 +66,12 @@
    * Uses the original _fetch to avoid triggering our own interceptor.
    */
   async function tryAutoSubmit(poll) {
-    const trivialTypes = ['attendance'];
+    const type = poll.type || '';
     const hasNoQuestions = !poll.config_json || poll.config_json.length === 0;
-    if (!trivialTypes.includes(poll.type) || !hasNoQuestions) return;
+    // Attendance: safe to auto-submit only when there are no embedded questions.
+    // Text entry: graded on completion only (any answer = full credit) — always safe.
+    if (type === 'attendance' && !hasNoQuestions) return;
+    if (type !== 'attendance' && type !== 'text_entry') return;
 
     // Look for a CSRF token in the standard locations.
     const csrfMeta   = document.querySelector('meta[name="csrf-token"]');
@@ -88,12 +91,14 @@
 
     // Try the most likely submission endpoint pattern.
     const url = `/api/v1/student/course/${poll.course_id}/poll/${poll.id}/respond`;
+    // Text entry polls need a response string; attendance just needs presence confirmed.
+    const responseBody = type === 'text_entry' ? { response: 'present' } : {};
     try {
       const res = await _fetch(url, {
         method:      'POST',
         headers,
         credentials: 'same-origin',
-        body:        JSON.stringify({}),
+        body:        JSON.stringify(responseBody),
       });
       window.postMessage(
         { type: res.ok ? 'UTPOLL_AUTOSUBMIT_OK' : 'UTPOLL_AUTOSUBMIT_FAIL',

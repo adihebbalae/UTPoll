@@ -4,7 +4,7 @@
   "version": "1.0.2",
   "description": "Monitors UT Instapoll and fires audio, desktop, and push alerts the moment a live poll is detected.",
 
-  "permissions": ["notifications", "storage", "offscreen"],
+  "permissions": ["notifications", "storage", "offscreen", "tabs"],
   "host_permissions": ["*://polls.la.utexas.edu/*", "https://ntfy.sh/*", "wss://pusher-ws.la.utexas.edu/*", "http://localhost:8080/*"],
 
   "content_security_policy": {
